@@ -54,10 +54,12 @@ empirical_p_value <- function(B,table_clone_predictions,n,x){
     fraction[i] = nrow(boot_table[boot_table$class == 0,])/nrow(boot_table)
   }
   p_value = sum(fraction > x)/B
-  return(list(p_value,mean(fraction)))
+  return(list(p_value,fraction))
 }
 
 
+library(ggplot2)
+library(RColorBrewer)
 
 output_dir = "/project/lncrna/Xist/plots/additional_analysis/"
 input_dir_clones = "/project/lncrna/Xist/data/modelling/model/clones/"
@@ -72,6 +74,7 @@ B=1000
 
 clone_performance = NULL
 clone_fc = list()
+bootstrap_performance = as.data.frame(matrix(0,nrow = B,ncol = length(clone)))
 
 pdf(paste(output_dir,"analysis_paper_loda.pdf",sep=""))
 
@@ -100,12 +103,14 @@ for(i in 1:length(clone)){
   
   clone_performance = rbind(clone_performance,table(table_clone_predictions_fc$class)/nrow(table_clone_predictions_fc))
   #clone_performance = rbind(clone_performance,c(p_value[[2]],1-p_value[[2]]))
+  bootstrap_performance[,i] = p_value[[2]]
   
   print(paste("silenced:",nrow(table_clone_predictions_fc[table_clone_predictions_fc$class == 0,])))
   print(paste("not silenced:",nrow(table_clone_predictions_fc[table_clone_predictions_fc$class == 1,])))
   
-  scatterplot_dense_colors(table_clone_predictions$vote,table_clone_predictions$foldchange,"vote (class 0)","foldchange",paste("clone",clone[i]))
-  print(cor.test(table_clone_predictions$vote,table_clone_predictions$foldchange))
+  cortest = cor.test(table_clone_predictions$vote,table_clone_predictions$foldchange)
+  scatterplot_dense_colors(table_clone_predictions$vote,table_clone_predictions$foldchange,"vote (class 0)","foldchange",paste("clone",clone[i],"r=",signif(cortest$estimate,3),"p-value:",signif(cortest$p.value,3)))
+  print(cortest)
   
   table_clone_predictions$class = as.factor(table_clone_predictions$class)
   
@@ -119,6 +124,16 @@ for(i in 1:length(clone)){
   
 }
 
+colnames(bootstrap_performance) = clone
+
+gg_box = ggplot(stack(bootstrap_performance), aes(x = ind, y = values)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + 
+  ggtitle("permutation test on clone performance") + theme_bw() + 
+  theme(axis.text.x=element_text(hjust = 0.5,size=10),axis.text.y=element_text(size=10),axis.title = element_text(face="bold", size=13),
+        plot.title = element_text(hjust = 0.5,size=15,face='bold'),plot.margin = unit(c(2,2,2,2), "cm"), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
+  scale_x_discrete(name = "clone") + scale_y_continuous(name = "accuracy for predicting silenced genes", limits = c(0,1)) +
+  geom_point(data = data.frame(x = factor(clone), y = clone_performance[,1]),aes(x=x, y=y),color = 'red',pch=8)
+print(gg_box)
 
 row.names(clone_performance) = clone
 par(mfrow=c(1,1),mar=c(2,2,2,2),oma=c(5,5,5,5))

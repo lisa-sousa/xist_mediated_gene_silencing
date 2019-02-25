@@ -2,7 +2,7 @@
 #read data
 ##################################
 
-predictions = read.table("/project/lncrna/Xist/data/modelling/model/xci_escape_model/results_thr_0.9_-_2/random_forest_predictions_new_genes.txt",header = T)
+predictions = read.table("/project/lncrna/Xist/data/modelling/model/xci_escape_model/results_thr_0.9_-_1.6/random_forest_predictions_new_genes.txt",header = T)
 mrna_seq = read.table("/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_undiff_mm10.txt", header = T)
 
 table = merge(predictions,mrna_seq,by="Genes")

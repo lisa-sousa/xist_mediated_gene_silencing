@@ -31,7 +31,7 @@ file_feature_matrix = "/project/lncrna/Xist/data/modelling/feature_matrix/promot
 
 thr_silencing_lower = 0.9
 thr_silencing_middle = "-"
-thr_silencing_upper = 2.0
+thr_silencing_upper = 1.6
 
 
 halftimes = read.table(file_halftimes,header=T)

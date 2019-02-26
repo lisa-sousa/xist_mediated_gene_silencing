@@ -72,19 +72,15 @@ pseudocount = 0.001
 thr_foldchange = c()
 B=1000
 
+pdf(paste(output_dir,"analysis_paper_loda_boxplots.pdf",sep=""))
+
 clone_performance = NULL
 clone_fc = list()
 bootstrap_performance = as.data.frame(matrix(0,nrow = B,ncol = length(clone)))
 
-pdf(paste(output_dir,"analysis_paper_loda.pdf",sep=""))
-
 for(i in 1:length(clone)){
+  print(paste("clone:",clone[i]))
   table_clone = get_foldchange(input_dir,chr[i],clone[i],pseudocount)
-  # if(chr[i]=="chr12"){
-  #   x = table_clone$foldchange
-  #   scaled_x = (x-0.5)/(1-0.5)
-  #   table_clone$foldchange = scaled_x
-  # }
   print(paste("genes in clone:",nrow(table_clone)))
   
   predictions = read.table(file = paste(input_dir_clones,predictions_clones[i],sep=""),header = T)
@@ -93,7 +89,7 @@ for(i in 1:length(clone)){
   clone_fc[[i]] = table_clone_predictions$foldchange
   print(paste("genes with predictions:",nrow(table_clone_predictions)))
   
-  thr_foldchange = as.numeric(quantile(table_clone_predictions$foldchange[table_clone_predictions$foldchange<1],0.85))
+  thr_foldchange = as.numeric(quantile(table_clone_predictions$foldchange[table_clone_predictions$foldchange<1],0.3))
   table_clone_predictions_fc = table_clone_predictions[table_clone_predictions$foldchange < thr_foldchange,]
   print(paste("genes with fc <",thr_foldchange,"are: ",nrow(table_clone_predictions_fc)))
   
@@ -108,36 +104,21 @@ for(i in 1:length(clone)){
   print(paste("silenced:",nrow(table_clone_predictions_fc[table_clone_predictions_fc$class == 0,])))
   print(paste("not silenced:",nrow(table_clone_predictions_fc[table_clone_predictions_fc$class == 1,])))
   
-  cortest = cor.test(table_clone_predictions$vote,table_clone_predictions$foldchange)
-  scatterplot_dense_colors(table_clone_predictions$vote,table_clone_predictions$foldchange,"vote (class 0)","foldchange",paste("clone",clone[i],"r=",signif(cortest$estimate,3),"p-value:",signif(cortest$p.value,3)))
-  print(cortest)
+  #cortest = cor.test(table_clone_predictions$vote,table_clone_predictions$foldchange)
+  #scatterplot_dense_colors(table_clone_predictions$vote,table_clone_predictions$foldchange,"vote (class 0)","foldchange",paste("clone",clone[i],"r=",signif(cortest$estimate,3),"p-value:",signif(cortest$p.value,3)))
+  #print(cortest)
   
-  table_clone_predictions$class = as.factor(table_clone_predictions$class)
+  #table_clone_predictions$class = as.factor(table_clone_predictions$class)
   
-  wilcox = wilcox.test(table_clone_predictions$foldchange[table_clone_predictions$class==0],table_clone_predictions$foldchange[table_clone_predictions$class==1])$p.value
-  gg_box = ggplot(table_clone_predictions, aes(x=class,y=foldchange)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + ggtitle(paste("clone",clone[i],"Wilcox-Test:",signif(wilcox,3))) + theme_bw() + 
-    theme(axis.text.x=element_text(hjust = 0.5,size=10),axis.text.y=element_text(size=10),axis.title = element_text(face="bold", size=15),
-          plot.title = element_text(hjust = 0.5,size=15,face='bold'),plot.margin = unit(c(2,2,2,2), "cm"), 
-          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-    scale_x_discrete(name = "silencing class") + scale_y_continuous(name = "folchange")
-  print(gg_box)
+  #wilcox = wilcox.test(table_clone_predictions$foldchange[table_clone_predictions$class==0],table_clone_predictions$foldchange[table_clone_predictions$class==1])$p.value
+  #gg_box = ggplot(table_clone_predictions, aes(x=class,y=foldchange)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + ggtitle(paste("clone",clone[i],"Wilcox-Test:",signif(wilcox,3))) + theme_bw() + 
+  #  theme(axis.text.x=element_text(hjust = 0.5,size=10),axis.text.y=element_text(size=10),axis.title = element_text(face="bold", size=15),
+  #        plot.title = element_text(hjust = 0.5,size=15,face='bold'),plot.margin = unit(c(2,2,2,2), "cm"), 
+  #        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
+  #  scale_x_discrete(name = "silencing class") + scale_y_continuous(name = "folchange")
+  #print(gg_box)
   
 }
-
-colnames(bootstrap_performance) = clone
-
-gg_box = ggplot(stack(bootstrap_performance), aes(x = ind, y = values)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + 
-  ggtitle("permutation test on clone performance") + theme_bw() + 
-  theme(axis.text.x=element_text(hjust = 0.5,size=10),axis.text.y=element_text(size=10),axis.title = element_text(face="bold", size=13),
-        plot.title = element_text(hjust = 0.5,size=15,face='bold'),plot.margin = unit(c(2,2,2,2), "cm"), 
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-  scale_x_discrete(name = "clone") + scale_y_continuous(name = "accuracy for predicting silenced genes", limits = c(0,1)) +
-  geom_point(data = data.frame(x = factor(clone), y = clone_performance[,1]),aes(x=x, y=y),color = 'red',pch=8)
-print(gg_box)
-
-row.names(clone_performance) = clone
-par(mfrow=c(1,1),mar=c(2,2,2,2),oma=c(5,5,5,5))
-barplot(t(clone_performance),main="performance of clones",legend = c("true","false"),ylab="fraction of genes (%)",xlab="clone",las=2)
 
 col = brewer.pal(6,"Set2")
 max = c()
@@ -154,4 +135,23 @@ legend("topleft",legend = clone,col = col,lty=1)
 
 dev.off()
 
+
+pdf(paste(output_dir,"analysis_paper_loda_bootstrap_all_fc_genes_all_genes.pdf",sep=""))
+
+colnames(bootstrap_performance) = clone
+
+gg_box = ggplot(stack(bootstrap_performance), aes(x = ind, y = values)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + 
+  ggtitle("permutation test on clone performance") + theme_bw() + 
+  theme(axis.text.x=element_text(hjust = 0.5,size=10),axis.text.y=element_text(size=10),axis.title = element_text(face="bold", size=13),
+        plot.title = element_text(hjust = 0.5,size=15,face='bold'),plot.margin = unit(c(2,2,2,2), "cm"), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
+  scale_x_discrete(name = "clone") + scale_y_continuous(name = "fraction of genes predicted as silenced", limits = c(0,1)) +
+  geom_point(data = data.frame(x = factor(clone), y = clone_performance[,1]),aes(x=x, y=y, size=15),color = 'red',pch=8)
+print(gg_box)
+
+row.names(clone_performance) = clone
+par(mfrow=c(1,1),mar=c(2,2,2,2),oma=c(5,5,5,5))
+barplot(t(clone_performance),main="performance of clones",legend = c("true","false"),ylab="fraction of genes (%)",xlab="clone",las=2)
+
+dev.off()
 

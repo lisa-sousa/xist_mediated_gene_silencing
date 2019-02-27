@@ -1,9 +1,11 @@
+library(reshape2)
 
-dir = "/project/lncrna/Xist/data/annotation_files/enhancers/"
+dir_data = "/Users/lisa/Desktop/data/"
+dir_enhancers = paste(dir_data,"annotation_files/enhancers/",sep="")
 file_HiCap_enhancers = "Promoter_Enhancer_Interactions.txt"
 file_output = "gene_enhancers.bed"
 
-hicap_enhancers = read.table(paste(dir,file_HiCap_enhancers,sep=""),header = T, sep = "\t")
+hicap_enhancers = read.table(paste(dir_enhancers,file_HiCap_enhancers,sep=""),header = T, sep = "\t")
 hicap_enhancers_chrX = hicap_enhancers[hicap_enhancers$Promoter.chr == "chrX" & hicap_enhancers$Fragment.chromosome == "chrX",]
 enhancer_bed = data.frame(chr = hicap_enhancers_chrX$Fragment.chromosome, start = hicap_enhancers_chrX$Fragment.start.coordinate, end = hicap_enhancers_chrX$Fragment.end.coordinate,
                           Genes = hicap_enhancers_chrX$Gene.Name, score = rowMeans(cbind(hicap_enhancers_chrX$Read.pairs.in.HiCap.replicate.1,hicap_enhancers_chrX$Read.pairs.in.HiCap.replicate.2)),
@@ -15,7 +17,7 @@ enhancer_bed$start[enhancer_bed$enhancer_length < 1000] = enhancer_bed$enhancer_
 enhancer_bed$end[enhancer_bed$enhancer_length < 1000] = enhancer_bed$enhancer_center[enhancer_bed$enhancer_length < 1000] + 500
 enhancer_bed$enhancer_length = abs(enhancer_bed$start-enhancer_bed$end)
 
-write.table(enhancer_bed[1:6],paste(dir,file_output,sep=""),col.names = F, row.names = F, sep="\t",quote = F)
+write.table(enhancer_bed[1:6],paste(dir_enhancers,file_output,sep=""),col.names = F, row.names = F, sep="\t",quote = F)
 
 
 #######
@@ -27,115 +29,103 @@ write.table(enhancer_bed[1:6],paste(dir,file_output,sep=""),col.names = F, row.n
 #function
 ##############
 
-plot_data_boxpots <- function(output_directory_plots_thr, data_set_all, data_set_strong){
-  
-  CairoPDF(file = paste(output_directory_plots_thr,'data_boxplots.pdf',sep=''), width = 15, height = 15)
-  hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_strength_HiC_promoter","mean_interaction_strength_HiC_xist")
-  
-  data_set_all$enhancer_set = "all_enhancer"
-  data_set_strong$enhancer_set = "strongest_enhancer"
-  data_set_plot = rbind(data_set_all,data_set_strong)
-  plot_df = melt(data_set_plot,id.vars = c("enhancer_set"))
-  
-  for(i in 1:ncol(data_set_all)){
-    
-    feature = colnames(data_set_all)[i]
-    column_all = cbind.data.frame(feature=data_set_all[,i],target=data_set_all$target, halftime=data_set_all$halftime)
-    
-    
-    
-    
-    if(is.factor(column)){
-      
-      column_target = cbind.data.frame(column,halftime)
-      feature0 = column_target[column_target[,1]==0,] # the feature
-      feature1 = column_target[column_target[,1]==1,] # the feature
-      
-      wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
-      
-      par(mar=c(15,7,7,7))
-      title_box_plot = paste(feature,"\nwilcox p-value:",signif(wilcox,4))
-      gg_box = ggplot(column_target, aes(x=column,y=halftime)) + geom_boxplot(notch=FALSE,fill = 'lightgrey', colour = 'black',alpha = 0.7,outlier.shape = 16) + ggtitle(title_box_plot) + theme_bw() + 
-        theme(axis.text.x=element_text(hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-              plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-        scale_x_discrete(name = "overlap") + scale_y_continuous(name = "halftime")
-      print(gg_box)
-    }else{
-      
-      column_target = cbind.data.frame(column,halftime,target)
-      class0 = column_target[column_target$target==0,]
-      class1 = column_target[column_target$target==1,]
-      
-      pears_corr = cor(column_target[,1],column_target[,2])
-      pears_pValue = cor.test(column_target[,1],column_target[,2])$p.value
-      
-      wilcox = wilcox.test(class0[,1],class1[,1])$p.value
-      
-      par(mar=c(15,7,7,7))
-      title_box_plot = paste(feature,"\npearson cor",signif(pears_corr,4),"with p-value:",signif(pears_pValue,4),"\n wilcox test:",signif(wilcox,4))
-      gg_box = ggplot(column_target, aes(x=target,y=column)) + geom_boxplot(notch=FALSE,fill = 'lightgrey', colour = 'black',alpha = 0.7,outlier.shape = 16) + ggtitle(title_box_plot) + theme_bw() + 
-        theme(axis.text.x=element_text(hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-              plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-        scale_x_discrete(name = "class") + scale_y_continuous(name = "feature") 
-      print(gg_box)
-    }
-    if(feature %in% hic_inteactions){
-      
-      column_target = cbind.data.frame(column,halftime)
-      column_target$column[column_target$column > 0] = 1
-      column_target$column = as.factor(column_target$column)
-      
-      feature0 = column_target[column_target[,1]==0,] # the feature
-      feature1 = column_target[column_target[,1]==1,] # the feature
-      
-      wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
-      
-      par(mar=c(15,7,7,7))
-      title_box_plot = paste(feature,"\nwilcox p-value:",signif(wilcox,4))
-      gg_box = ggplot(column_target, aes(x=column,y=halftime)) + geom_boxplot(notch=FALSE,fill = 'lightgrey', colour = 'black',alpha = 0.7,outlier.shape = 16) + ggtitle(title_box_plot) + theme_bw() + 
-        theme(axis.text.x=element_text(hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-              plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-        scale_x_discrete(name = "overlap") + scale_y_continuous(name = "halftime")
-      print(gg_box)
-    }
-  }
-  dev.off()
+get_wilcox_p_value <- function(column){
+  feature0 = column[column$feature==0,] # the feature
+  feature1 = column[column$feature==1,] # the feature
+  wilcox = wilcox.test(feature0$halftime,feature1$halftime)$p.value
+  return(wilcox)
 }
 
+get_wilcox_and_personcor <- function(column) {
+  class0 = column[column$target==0,]
+  class1 = column[column$target==1,]
+  wilcox = wilcox.test(class0$feature,class1$feature)$p.value
+  
+  pears_corr = cor(column$feature,column$halftime)
+  pears_pValue = cor.test(column$feature,column$halftime)$p.value
+  
+  return(list(wilcox,pears_corr,pears_pValue))
+}
 
-plot_error_rates <- function(output_directory_plots_thr, random_forest_model_all_features, random_forest_model_top_features){
+plot_binary_feature <- function(feature,column_all,column_strongest,column_close,n){
+  wilcox_all = get_wilcox_p_value(column_all)
+  #wilcox_all = p.adjust(get_wilcox_p_value(column_all), method = "BH", n=n)
+  wilcox_strongest = get_wilcox_p_value(column_strongest)
+  #wilcox_strongest = p.adjust(get_wilcox_p_value(wilcox_strongest), method = "BH", n=n)
   
-  CairoPDF(file = paste(output_directory_plots_thr,'error_rate.pdf',sep=''), width = 10, height = 10)
+  wilcox_close = get_wilcox_p_value(column_close)
+  #wilcox_close = p.adjust(get_wilcox_p_value(wilcox_close), method = "BH", n=n)
   
+  data_set_plot = rbind(column_all,column_strongest,column_close)[,c(4,1,3)]
+  colnames(data_set_plot) = c("enhancer_set","overlap","value")
   
+  par(mar=c(15,7,7,7))
+  title_box_plot = paste(feature,
+                         "\nwilcox test p-value for all enhancer: ",signif(wilcox_all,3),
+                         "\nwilcox test p-value for strongest enhancer:",signif(wilcox_strongest,3),
+                         "\nwilcox test p-value for closest enhancer:",signif(wilcox_close,3))
   
-  par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))
-  
-  ggbox = ggplot(plot_df, aes(x = variable, y = value, fill = enhancer_set)) + geom_boxplot(alpha=0.7,notch = T) +
-    scale_y_continuous(name = "error rate (%)", limits=c(0, 50)) + scale_x_discrete(name = "") + ggtitle("Error rate for Random Forest models") +
-    theme_bw() + theme(plot.title = element_text(size = 14, family = "Tahoma", face = "bold",hjust = 0.5),text = element_text(size = 12, family = "Tahoma"),
-                       axis.title = element_text(face="bold"),axis.text.x=element_text(angle = 60, hjust = 1,size=11),plot.margin = unit(c(2,2,2,2), "cm"),
-                       axis.line = element_line(colour = "black")) + 
+  ggbox = ggplot(data_set_plot, aes(x = enhancer_set, y = value, fill = overlap)) + geom_boxplot(alpha=0.7,notch = F) +
+    scale_y_continuous(name = "half-time[days]") + scale_x_discrete(name = "enhancer set") + ggtitle(title_box_plot) +
+    theme_bw() + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0.5),
+                       axis.title = element_text(size=15, face="bold"),
+                       axis.text.x = element_text(size=15, angle = 60, hjust = 1),
+                       axis.text.y = element_text(size=15),
+                       axis.line = element_line(colour = "black"),
+                       plot.margin = unit(c(2,2,2,2), "cm")) + 
     scale_fill_brewer(palette = "Greys")
-  
   print(ggbox)
-  
-  dev.off()
 }
+
+plot_continuous_feature <- function(feature,column_all,column_strongest,column_close,n){
+  statistics_all = get_wilcox_and_personcor(column_all)
+  wilcox_all = statistics_all[[1]]
+  #wilcox_all = p.adjust(statistics_all[[1]], method = "BH", n=n)
+  
+  statistics_strongest = get_wilcox_and_personcor(column_strongest)    
+  wilcox_strongest = statistics_strongest[[1]]
+  #wilcox_strongest = p.adjust(statistics_strongest[[1]], method = "BH", n=n)
+  
+  statistics_close = get_wilcox_and_personcor(column_close)    
+  wilcox_close = statistics_close[[1]]
+  #wilcox_strongest = p.adjust(statistics_close[[1]], method = "BH", n=n)
+  
+  data_set_plot = rbind(column_all,column_strongest,column_close)[,c(4,2,1)]
+  colnames(data_set_plot) = c("enhancer_set","silencing_class","value")
+  data_set_plot$silencing_class = as.factor(data_set_plot$silencing_class)
+  
+  par(mar=c(15,7,7,7))
+  title_box_plot = paste(feature,
+                         "\nwilcox test p-value for all enhancer: ",signif(wilcox_all,3),
+                         "\nwilcox test p-value for strongest enhancer:",signif(wilcox_strongest,3),
+                         "\nwilcox test p-value for closest enhancer:",signif(wilcox_close,3))
+  
+  ggbox = ggplot(data_set_plot, aes(x = enhancer_set, y = value, fill = silencing_class)) + geom_boxplot(alpha=0.7,notch = F) +
+    scale_y_continuous(name = "half-time[days]") + scale_x_discrete(name = "enhancer set") + ggtitle(title_box_plot) +
+    theme_bw() + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0.5),
+                       axis.title = element_text(size=15, face="bold"),
+                       axis.text.x = element_text(size=15, angle = 60, hjust = 1),
+                       axis.text.y = element_text(size=15),
+                       axis.line = element_line(colour = "black"),
+                       plot.margin = unit(c(2,2,2,2), "cm")) + 
+    scale_fill_brewer(palette = "Greys")
+  print(ggbox)
+}
+
+###############
+#enhancer sets
+###############
 
 source("/project/lncrna/Xist/xist_mediated_gene_silencing/modelling/model_functions.R")
-output_dir = "/project/lncrna/Xist/plots/additional_analysis/"
-file_halftimes = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt"
-file_feature_matrix = "/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_normRAdjusted_enhancer.RData"
+output_dir = "/Users/lisa/work_stuff/projects/xist_epigenetics/computing/plots/additional_analysis/"
+file_halftimes = paste(dir_data,"silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt",sep="")
+file_feature_matrix = paste(dir_data,"modelling/feature_matrix/promoter_matrix_normRAdjusted_enhancer.RData",sep="")
 
+hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_strength_HiC_promoter","mean_interaction_strength_HiC_xist")
 
 thr_silencing_lower = 0.9
 thr_silencing_middle = "-"
 thr_silencing_upper = 2
-
 
 halftimes = read.table(file_halftimes,header=T)
 
@@ -149,15 +139,7 @@ data_set$target = 0
 data_set$target[data_set$halftime > 2] = 1
 
 data_set_all = cbind(data_set[,10:86],target=data_set$target,halftime=data_set$halftime)
-
-#all enhancers per gene
-data_all=list()
-data_all[[1]] = data_set[,10:86]
-data_all[[2]] = as.factor(data_set$target)
-data_all[[3]] = data_set$halftime
-
-plot_data_boxpots(output_dir, data)
-
+n = ncol(data_set_all)-2
 
 #choose strongest enhancer
 data_set_strong = data_set
@@ -170,25 +152,49 @@ for(i in 1:length(genes)){
 data_set_strong = data_set_strong[!duplicated(data_set_strong),]  
 data_set_strong = cbind(data_set_strong[,10:86],target=data_set_strong$target,halftime=data_set_strong$halftime)
   
-data_strong=list()
-data_strong[[1]] = data_set_strong[,10:86]
-data_strong[[2]] = as.factor(data_set_strong$target)
-data_strong[[3]] = data_set_strong$halftime
-
-plot_data_boxpots(output_dir, data)
-  
 #choose closest enhancer per gene
-genes = unique(as.character(data_set$Genes[duplicated(data_set$Genes)]))
-data_set$TSS = 0
-data_set$TSS[data_set$Strand == "+"] = data_set$Start[data_set$Strand == "+"]
-data_set$TSS[data_set$Strand == "-"] = data_set$End[data_set$Strand == "-"]
+data_set_close = data_set
+genes = unique(as.character(data_set_close$Genes[duplicated(data_set_close$Genes)]))
+data_set_close$TSS = 0
+data_set_close$TSS[data_set_close$Strand == "+"] = data_set_close$Start[data_set_close$Strand == "+"]
+data_set_close$TSS[data_set_close$Strand == "-"] = data_set_close$End[data_set_close$Strand == "-"]
 for(i in 1:length(genes)){
-  entry = data_set[data_set$Genes==genes[i],]
+  entry = data_set_close[data_set_close$Genes==genes[i],]
   enhancer_start = entry$start[which.min(abs(entry$TSS-entry$enhancer_center))]
-  data_set = data_set[!(data_set$Genes==genes[i] & data_set$start != enhancer_start),]
+  data_set_close = data_set_close[!(data_set_close$Genes==genes[i] & data_set_close$start != enhancer_start),]
 }
-data_set = data_set[!duplicated(data_set),]  
+data_set_close = data_set_close[!duplicated(data_set_close),]  
+data_set_close = cbind(data_set_close[,10:86],target=data_set_close$target,halftime=data_set_close$halftime)
 
 
+##plots boxplots
+pdf(paste(output_dir,"enhancer_boxplots.pdf"),height = 10, width = 10)
 
-#choose only active enhancer
+for(i in 1:(ncol(data_set_all)-2)){
+  
+  feature = colnames(data_set_all)[i]
+  column_all = cbind.data.frame(feature=data_set_all[,i],target=data_set_all$target, halftime=data_set_all$halftime, enhancer_set = factor("all"))
+  column_strongest = cbind.data.frame(feature=data_set_strong[,i],target=data_set_strong$target, halftime=data_set_strong$halftime, enhancer_set = factor("strongest"))
+  column_close = cbind.data.frame(feature=data_set_close[,i],target=data_set_close$target, halftime=data_set_close$halftime, enhancer_set = factor("closest"))
+  
+  if(is.factor(column_all$feature)){
+    plot_binary_feature(feature,column_all,column_strongest,column_close,n)
+  }else{
+    plot_continuous_feature(feature,column_all,column_strongest,column_close,n)
+    
+  }
+  if(feature %in% hic_inteactions){
+    column_all$feature[column_all$feature > 0] = 1
+    column_all$feature = as.factor(column_all$feature)
+    
+    column_strongest$feature[column_strongest$feature > 0] = 1
+    column_strongest$feature = as.factor(column_strongest$feature)
+    
+    column_close$feature[column_close$feature > 0] = 1
+    column_close$feature = as.factor(column_close$feature)
+    
+    plot_binary_feature(feature,column_all,column_strongest,column_close,n)
+  }
+}
+
+dev.off()

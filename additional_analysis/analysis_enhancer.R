@@ -136,7 +136,7 @@ hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_streng
 
 thr_silencing_lower = 0.9
 thr_silencing_middle = "-"
-thr_silencing_upper = 2
+thr_silencing_upper = 1.6
 
 halftimes = read.table(file_halftimes,header=T)
 

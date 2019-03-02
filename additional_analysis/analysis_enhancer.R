@@ -98,9 +98,8 @@ plot_continuous_feature <- function(feature,column_all,column_strongest,column_c
   data_set_plot = rbind(column_all,column_strongest,column_close)[,c(4,2,1)]
   colnames(data_set_plot) = c("enhancer_set","silencing_class","value")
   data_set_plot$silencing_class[data_set_plot$silencing_class==0] = "silenced"
-  data_set_plot$silencing_class[data_set_plot$silencing_class==1] = "not silenced"
+  data_set_plot$silencing_class[data_set_plot$silencing_class==1] = "xnot silenced"
   data_set_plot$silencing_class = as.factor(data_set_plot$silencing_class)
-  levels(data_set_plot$silencing_class) = factor(data_set_plot$silencing_class, levels = rev(levels(data_set_plot$silencing_class)))
   
   title_box_plot = paste(feature,
                          "\np-value for all: ",signif(wilcox_all,3),
@@ -136,7 +135,7 @@ hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_streng
 
 thr_silencing_lower = 0.9
 thr_silencing_middle = "-"
-thr_silencing_upper = 1.6
+thr_silencing_upper = 2
 
 halftimes = read.table(file_halftimes,header=T)
 
@@ -147,7 +146,7 @@ data_set = cbind(data_set,enhancer_bed[,c(2,3,8)])
 data_set = merge(halftimes,data_set,by="Genes")
 data_set = data_set[data_set$halftime < thr_silencing_lower | data_set$halftime > thr_silencing_upper,]
 data_set$target = 0
-data_set$target[data_set$halftime > 2] = 1
+data_set$target[data_set$halftime > thr_silencing_upper] = 1
 
 data_set_all = cbind(data_set[,10:86],target=data_set$target,halftime=data_set$halftime)
 n = ncol(data_set_all)-2

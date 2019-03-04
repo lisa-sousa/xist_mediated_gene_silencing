@@ -33,7 +33,7 @@ for(i in 1:3){
 
 ###get change in silencing between WT and mutant
 ###mutanta A
-thr_mutant_A = 1.3
+thr_mutant_A = 1
 table$change_mutant_A = table$A - table$WT
 table$reduced_silencing_mutant_A = 0
 table$reduced_silencing_mutant_A[table$change_mutant_A > thr_mutant_A] = 1

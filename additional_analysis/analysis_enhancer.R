@@ -1,4 +1,7 @@
 library(reshape2)
+library(ggplot2)
+library(gridExtra)
+
 
 dir_data = "/Users/lisa/Desktop/data/"
 dir_enhancers = paste(dir_data,"annotation_files/enhancers/",sep="")
@@ -123,9 +126,6 @@ plot_continuous_feature <- function(feature,column_all,column_strongest,column_c
 ###############
 #enhancer sets
 ###############
-
-library(ggplot2)
-library(gridExtra)
 
 output_dir = "/Users/lisa/work_stuff/projects/xist_epigenetics/computing/plots/additional_analysis/"
 file_halftimes = paste(dir_data,"silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt",sep="")

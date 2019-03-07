@@ -1,3 +1,6 @@
+###################################################################################
+#input directories
+###################################################################################
 
 deepTools = '/home/lisasous/tools/deepTools2.0/bin/'
 file_metadata = '/project/lncrna/Xist/data/chip_seq/metadata/metadata_filtered_by_coverage.txt'
@@ -6,10 +9,19 @@ control_dir = '/project/ngs_marsico/Xist/bam/control/'
 output_dir_data = '/project/lncrna/Xist/data/chip_seq/bigwigs/raw/'
 output_dir_plot = '/project/lncrna/Xist/plots/chip_seq_analysis/heatmap/data_raw/'
 gene_region = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_new_gene_annotation.bed'
-a = 2000
-b = 2000
+
+###################################################################################
+#parameters
+###################################################################################
+
+a = 2000 #bp downstream of TSS
+b = 2000 #bp upstream of TSS
 binsize.bigwig = 25
 binsize.heatmap = 100
+
+###################################################################################
+#load metadata
+###################################################################################
 
 metadata = read.table(file_metadata,sep='\t',header=T,comment.char='')
 colnames(metadata)[1] = 'feature'
@@ -23,6 +35,10 @@ titles = unlist(lapply(strsplit(metadata$experiment_file,"[.]"),'[[',1))
 cmd = paste("mkdir ",output_dir_data,"tmp",sep="")
 print(cmd)
 system(cmd)
+
+###################################################################################
+#create deepTools plots
+###################################################################################
 
 for (i in 1:nrow(metadata)) {
   print(metadata$feature[i])

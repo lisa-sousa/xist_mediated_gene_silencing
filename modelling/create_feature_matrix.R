@@ -1,12 +1,15 @@
+###################################################################################
+#libraries
+###################################################################################
 
 library(energy)
 library(rtracklayer)
 library(GenomicRanges)
 library(Biostrings)
 
-##############################
-#READ AND MERGE DATA
-##############################
+###################################################################################
+#directories
+###################################################################################
 
 region_name = 'promoter'
 bedTools = '/home/lisasous/tools/bedtools2/bin/'
@@ -15,6 +18,9 @@ tmp_dir = paste(output_dir,'tmp',sep='')
 cmd = paste('mkdir',tmp_dir)
 system(cmd)
 
+###################################################################################
+#load gene annotation
+###################################################################################
 
 ##########genes mm9 from gencode
 genes_mm9_gencode_file = '/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.mm9.bed'
@@ -32,7 +38,7 @@ halftimes_table$TSS[halftimes_table$strand == '+'] = halftimes_table$start[halft
 halftimes_table$TSS[halftimes_table$strand == '-'] = halftimes_table$end[halftimes_table$strand == '-']
 
 
-##########gene regions
+##########gene regions from start to end and 500 bp around the promoter
 gene_regions = GRanges(seqnames = halftimes_table$chr, ranges = IRanges(halftimes_table$start,halftimes_table$end), strand = halftimes_table$strand)
 mcols(gene_regions) = data.frame(name = halftimes_table$gene_name, score = halftimes_table$halftime)
 #mcols(gene_regions) = data.frame(name = halftimes_table$gene_name, score = 0) #all genes
@@ -44,11 +50,14 @@ gene_regions_1000 = promoters(gene_regions, upstream = 500, downstream = 500)
 tmp_gene_regions_1000_file = paste(tmp_dir,'/tmp_gene_regions_1000_file.bed',sep='')
 export.bed(gene_regions_1000,tmp_gene_regions_1000_file,format='bed')
 
+###################################################################################
+#load chip-seq data
+###################################################################################
 
-##########ChIP-Seq data
-#metadata
 input_dir = '/project/lncrna/Xist/data/chip_seq/normalized_counts/reannotated_normRAdjusted_pro_seq_genes/'
 #input_dir = '/project/lncrna/Xist/data/chip_seq/normalized_counts/reannotated_normRAdjusted_all_chrX_genes/' #all genes
+
+#metadata
 file_metadata = '/project/lncrna/Xist/data/chip_seq/metadata/metadata_normalization_regions.txt'
 metadata = read.table(file_metadata,sep='\t',header=T,comment.char='')
 colnames(metadata)[1] = 'feature'
@@ -75,6 +84,9 @@ for (i in 1:nrow(metadata)) {
   chip_seq_table = merge(chip_seq_table,chip_seq,by='gene_name')
 }
 
+###################################################################################
+#compute genomic features
+###################################################################################
 
 ##########distance to closest topological domain (TAD) (mapped to mm9)
 TADs_file = '/project/lncrna/Xist/data/annotation_files/TADs/HindIII_combined/topological_domains_chrX.domains'
@@ -301,8 +313,10 @@ distance_LINE_table = data.frame(gene_name = halftimes_table$gene_name, distance
 cmd = paste('rm -rf',tmp_dir)
 system(cmd)
 
+###################################################################################
+#merge all tables
+###################################################################################
 
-##########merge all tables
 merged_tables = merge(halftimes_table[,c(4,5)], chip_seq_table, by = 'gene_name', all.x = T, all.y = F)
 merged_tables = merge(merged_tables, distance_TAD_table, by = 'gene_name', all.x = T, all.y = F)
 merged_tables = merge(merged_tables, gene_density_gencode_table, by = 'gene_name', all.x = T, all.y = F)
@@ -324,7 +338,10 @@ merged_tables = merge(merged_tables, distance_LINE_table, by = 'gene_name', all.
 #for all empty entries (NA) write a 0 into data frame
 #merged_tables[is.na(merged_tables)] = 0
 
-#create matrix
+###################################################################################
+#create matrix and save it
+###################################################################################
+
 matrix_table = merged_tables
 row.names(matrix_table) = matrix_table$gene_name
 matrix_table$gene_name = NULL
@@ -370,120 +387,3 @@ for(j in 1:(ncol(data_set))){
 }
 
 save(data_set,halftime,file = paste(output_dir,region_name,'_matrix_log_transformed.RData',sep=''))
-
-
-  
-
-#######boxplots
-# hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_strength_HiC_promoter","mean_interaction_strength_HiC_xist")
-# 
-# pdf(paste("/project/lncrna/Xist/plots/additional_analysis/basic_analysis/boxplots_",region_name,".pdf", sep=""), 8.5,7)
-# 
-# thr_silencing_lower = 0.5
-# thr_silencing_middle = 0.9
-# thr_silencing_uppper = 1.3
-# 
-# for(i in 1:ncol(matrix_table)){
-#   
-#   print(colnames(matrix_table)[i])
-#   column = matrix_table[,i]
-#   feature = colnames(matrix_table)[i]
-#   
-#   if(is.factor(column)){
-# 
-#     column_target = cbind.data.frame(column,halftime)
-#     column_target = column_target[complete.cases(column_target),]
-# 
-#     feature0 = column_target[column_target[,1]==0,] # the feature
-#     feature1 = column_target[column_target[,1]==1,] # the feature
-#     wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
-#     
-#     par(mar=c(15,7,7,7))
-#     title_box_plot = paste(feature,"\nwilcox p-value:",round(wilcox,5))
-#     boxplot(feature1[,2],feature0[,2], names=c("overlap\n(interaction)", "no overlap\n(no interaction)"), main=title_box_plot, ylab="Half time", lwd=2, cex.axis = 1.75, cex.main = 1.9, cex.lab = 1.9, las=2)
-#     
-#     
-#   }else{
-#     
-#     #exclude outliers from the data 
-#     if(sum(range(column) == range(c(0,1))) != 2){
-#       qnt=quantile(column,probs=c(.05,0.95),na.rm = T)
-#       column[column<(qnt[1])] <-NA
-#       column[column>(qnt[2])] <-NA 
-#     }
-#     
-#     #if removal of outliers destroys bimodal distribution(e.g. binary variables) then don't remove outliers
-#     if(length(unique(column[complete.cases(column)])) == 1){
-#       column = matrix_table[,i]
-#     }
-#     column_target = cbind.data.frame(column,halftime)
-#     column_target = column_target[complete.cases(column_target),]
-#     
-#     #calculate overall correlations
-#     sper_corr = cor(column_target[,1],column_target[,2], method="spearman")
-#     sper_pValue = cor.test(column_target[,1],column_target[,2], method="spearman")$p.value
-#     
-#     pears_corr = cor(column_target[,1],column_target[,2])
-#     pears_pValue = cor.test(column_target[,1],column_target[,2])$p.value
-#     
-#     dist_corr = dcor(column_target[,1],column_target[,2])
-#     
-#     #calculate correlation for genes in classes
-#     if(thr_silencing_middle == "-"){
-#       class1 = column_target[column_target[,2] < thr_silencing_lower,] #silenced/early silenced
-#       class2 = column_target[column_target[,2] > thr_silencing_uppper,] #not silenced/late silenced
-#       column_target_class = rbind(column_target[column_target[,2] < thr_silencing_lower,], column_target[column_target[,2] > thr_silencing_uppper,])
-#     }else{
-#       class1 = column_target[column_target[,2] < thr_silencing_lower,]
-#       class2 = column_target[column_target[,2] > thr_silencing_middle & column_target[,2] < thr_silencing_uppper,]
-#       column_target_class = rbind(column_target[column_target[,2] < thr_silencing_lower,], column_target[column_target[,2] > thr_silencing_middle & column_target[,2] < thr_silencing_uppper,])
-#     }
-#     
-#     sper_corr_class = cor(column_target_class[,1],column_target_class[,2], method="spearman")
-#     sper_pValue_class = cor.test(column_target_class[,1],column_target_class[,2], method="spearman")$p.value
-#     
-#     pears_corr_class = cor(column_target_class[,1],column_target_class[,2])
-#     pears_pValue_class = cor.test(column_target_class[,1],column_target_class[,2])$p.value
-#     
-#     dist_corr_class = dcor(column_target_class[,1],column_target_class[,2])
-#     
-#     wilcox = wilcox.test(class1[,1],class2[,1])$p.value
-#     
-#     #print(paste(feature,pears_corr,sper_corr,dist_corr,sep=","))
-#     
-#     par(mar=c(10,7,10,7))
-#     density_class1 = density(class1[,1])
-#     density_class2 = density(class2[,1])
-#     plot(density_class1, main = feature, ylim = c(0,max(c(density_class1$y,density_class2$y))), col="lightblue")
-#     lines(density_class2,col="orange")
-#     legend("topright", legend = c("class1: silenced/early silenced","class2: not silenced/late silenced"), col=c("lightblue","orange"),pch = "*")
-#     
-#     par(mar=c(15,7,7,7))
-#     title_box_plot = paste(feature,"\npearson cor p-value (all genes with halftime):",round(pears_pValue,5),"\n pearson cor p-value (only class genes):",round(pears_pValue_class,5))
-#     boxplot(names=c("class1 \n(silenced/early silenced)","class2 \n(not silenced/late silenced)"), class1[,1],class2[,1], main=title_box_plot, lwd=2, cex.axis = 1, cex.main = 1.9, cex.lab = 1.9, las=2)
-#     
-#   }
-#   if(feature %in% hic_inteactions){
-#     
-#     column_target = cbind.data.frame(column,halftime)
-#     column_target = column_target[complete.cases(column_target),]
-#     column_target$column[column_target$column > 0] = 1
-#     column_target$column = as.factor(column_target$column)
-#     
-#     feature0 = column_target[column_target[,1]==0,] # the feature
-#     feature1 = column_target[column_target[,1]==1,] # the feature
-#     wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
-#     
-#     par(mar=c(15,7,7,7))
-#     title_box_plot = paste(feature,"\nwilcox p-value:",round(wilcox,5))
-#     boxplot(feature1[,2],feature0[,2], names=c("overlap\n(interaction)", "no overlap\n(no interaction)"), main=title_box_plot, ylab="Half time", lwd=2, cex.axis = 1.75, cex.main = 1.9, cex.lab = 1.9, las=2)
-#   }
-# }
-# dev.off()
-
-
-
-
-
-
-

@@ -1,12 +1,13 @@
-
 library('ggplot2')
 library('gridExtra')
 library('tidyr')
 library('plyr')
 library('dplyr')
+
 control=nls.control(warnOnly=TRUE) # prevent stopping the fit
 slow.genes = c('Maoa','Kcnd1','Pim2','Pqbp1','Wdr13')
 fast.genes = c('Taf9b', 'Rnf128', 'Ripply1', 'Foxo4', 'Sat1','Nxt2')
+
 # read in data
 data = read.table('/project/lncrna/Xist/data/silencing_halftimes/raw_data/pyrosequencing.txt',header=T,dec=',')
 

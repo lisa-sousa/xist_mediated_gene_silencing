@@ -30,8 +30,11 @@ f) *6_normalize_ChIP_data_with_normr.R*: this script is used to calculate the no
 
 #### modelling
 This folder contain three scripts which are used to create the feature matrix and to build the Random Forest, do predictions and plot the forest-guided clustering.
+
 a) *create_feature_matrix.R*: this script is used to compute the feature matrix, it loads the pre-processed chip-seq data (normalized enrichment for pre-defined regions by *6_normalize_ChIP_data_with_normr.R*) and computes each genomic feature as described in the manuscript
+
 b) *model_functions.R*: this script contains all functions used by *model.R* to load the feature matrix and half-times, create boxplots for each feature seperated by class, optimize Random Forest parameters, run stability test of Random Forest model, get the number of top features that optimize the error rate, make predictions for genes used to build the Random Forst and new genes, plot error rate and feature importance of the RF model, perform forest-guided (proximity) clustering and optimize number of clusters k, plot heatmap and boxplots for clustering
+
 c) *model.R*: this script is used to build the RF model, do prediction and do the forest-guided clustering for a set of threshold combination specified in the script and outputs all the plots for each threshold into a subfolder and the statistics for all threshold combinations into a text document in the main folder; this script was used to create all figures related to the RF model (e.g. model error SF7, feature importance SF8/9, clustering stability SF 10, cluster heatmaps Fig. 5/6)
 
 

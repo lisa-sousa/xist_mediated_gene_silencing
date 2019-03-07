@@ -45,7 +45,7 @@ thr_silencing_upper_seq = c(1,1.1,1.2,1.3,1.4)
 #threshold combination for "XCI/escape" model
 thr_silencing_lower_seq = c(0.9,1.0,1.1,1.2,1.3,1.4)
 thr_silencing_middle_seq = "-"
-thr_silencing_upper_seq = c(1.5,1.6,1.7,1.8,1.9,2.0)
+thr_silencing_upper_seq = c(1.4,1.6,1.7,1.8,1.9,2.0)
 
 ncores = 20 # number of cores for parallelization
 test_set_min_size = 10 # minimum number of genes in OOB set

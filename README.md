@@ -15,11 +15,17 @@ b) *fit_halftimes_pyrosequencing.R*: computes half-times for the 11 pyrosequenci
 
 #### chip_seq_analysis
 This folder contains all scripts that were used to pre-process all chip-seq data sets.
+
 a) *1_mapping.py*: this script maps chip-seq data to the given genome; takes as input a sra or fastq file; the path to the used tools as well as the genome assembly that should be used must be specified in the script; an example call is given in the header of the script
+
 b) *2_plot_coverage.R*: this script claculates the library coverage for a list of given chip-seq experiments; it takes as input the input directories for chip and control experiments as well as a metadata file where the chip-seq name (e.g. CTCF), the GEO number, file name of experiment and control are defined 
+
 c) *3_plot_fingerprints.R*: this script produced the fingerprint plots (e.g. used to create Figure SF5) for each chip-seq data set; it takes as input the input directories for chip and control experiments as well as a metadata file where the chip-seq name (e.g. CTCF), the GEO number, file name of experiment and control are defined
+
 d) *4_get_active_gene_promoter.R*: this script assigns each gene its active TSS based on the overlap of a gene's TSS with a regulatory region (caculated as described in the manuscript); it takes as input a Gencode gene annotation and the file with the processed regulatory regions
+
 e) *5_plot_heatmap_deepTools_control_vs_experiment.R*: this script creates the deepTools heatmap plots (e.g. used to create Figure SF4/SF5); its takes as input a bed file with gene annotation, the input directories for chip and control experiments as well as a metadata file where the chip-seq name (e.g. CTCF), the GEO number, file name of experiment and control are defined; the plotting window (+/- x bp around the TSS) is defined in the script (a/b)
+
 f) *6_normalize_ChIP_data_with_normr.R*: this script is used to calculate the normalized enrichemnt scores in a window specified for each chip-seq feature (e.g. 500 bp around TSS or gene body); its takes as input a bed file with gene annotation, the input directories for chip and control experiments as well as a metadata file where the chip-seq name (e.g. CTCF), the GEO number, file name of experiment and control, the # of bp upstream of TSS (a), the # of bp downstream of TSS (b) (for gene body specify either a=NA and b=x which mean from TSS to x bp downstream OR gene end if x is longer then the gene; or specify a=NA and b=NA for whole gene body); binsize for normR normalization (needs to be adapted to the width of the chip-seq peak, e.g. 1000-1500 for broad peaks and 250-750 for narrow peaks) are defined
 
 #### modelling

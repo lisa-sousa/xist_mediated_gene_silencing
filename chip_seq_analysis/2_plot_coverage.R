@@ -1,4 +1,12 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(Cairo)
+
+###################################################################################
+#input directories
+###################################################################################
 
 samtools = '/home/lisasous/tools/samtools-1.9/samtools'
 file_metadata = '/project/lncrna/Xist/data/chip_seq/metadata/metadata_merged_replicates.txt'
@@ -6,12 +14,20 @@ experiment_dir = '/project/ngs_marsico/Xist/bam/experiment/'
 control_dir = '/project/ngs_marsico/Xist/bam/control/'
 output_dir = '/project/lncrna/Xist/plots/chip_seq_analysis/library_coverage/'
 
+###################################################################################
+#load metadata
+###################################################################################
+
 metadata = read.table(file_metadata,sep='\t',header=T,comment.char='')
 colnames(metadata)[1] = 'feature'
 metadata$feature = as.character(metadata$feature)
 metadata$accession_number = as.character(metadata$accession_number)
 metadata$experiment_file = as.character(metadata$experiment_file)
 metadata$control_file = as.character(metadata$control_file)
+
+###################################################################################
+#compute coverage
+###################################################################################
 
 coverage_df = data.frame(title = unlist(lapply(strsplit(metadata$experiment_file,"[.]"),'[[',1)), coverage_experiment = 0, coverage_control = 0)
 

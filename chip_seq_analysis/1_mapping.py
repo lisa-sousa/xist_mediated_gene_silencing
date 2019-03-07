@@ -1,9 +1,9 @@
 import os
 import argparse
-# convert from sra to fastq
-# Download sra files with SRA toolkit
+
+# before using this script download sra files with SRA toolkit
 # for information on the parameters type python mapping.py -h
-# example call: python mapping.py -i /project/ngs_marsico/Xist/mapping/sra/SRR1991254.sra -g GSE68195 -n input -s 0 -d /project/ngs_marsico/Xist/mapping/
+# example call: python mapping.py -i SRR1991254.sra -g GSE68195 -n input -s 0 -d mapping/
 
 # set the correct path to the tools --> set path to tools to "" if you can call them directly!!!
 ucsc_tools = "/scratch/ngsvin/bin/chip-seq/bigwig/" 

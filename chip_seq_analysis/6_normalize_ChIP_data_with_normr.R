@@ -1,9 +1,16 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(normr)
 library(GenomicRanges)
 library(rtracklayer)
 library(bamsignals)
 
-#directories
+###################################################################################
+#input directories
+###################################################################################
+
 file_genes = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed'
 #file_genes = '/project/lncrna/Xist/data_lisa/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.reannotated.with.rr.mm9.bed'
 #file_genes = "/project/lncrna/Xist/data/annotation_files/enhancers/gene_enhancers.bed"
@@ -13,7 +20,10 @@ ChIP_dir = '/project/ngs_marsico/Xist/bam/experiment/'
 ctrl_dir = '/project/ngs_marsico/Xist/bam/control/'
 output_dir = '/project/lncrna/Xist/data/chip_seq/normalized_counts/'
 
-#metadata
+###################################################################################
+#load metadata
+###################################################################################
+
 metadata = read.table(file_metadata,sep='\t',header=T,comment.char='')
 colnames(metadata)[1] = 'feature'
 metadata$feature = as.character(metadata$feature)
@@ -27,6 +37,10 @@ metadata$control_file = as.character(metadata$control_file)
 #chromosome
 mm9_chrom_sizes = read.table(file = file_mm9_chrom_sizes, header=F, sep='\t')
 colnames(mm9_chrom_sizes) = c('chr','length')
+
+###################################################################################
+#calculate normalized enrichment in given window
+###################################################################################
 
 for (i in 1:nrow(metadata)) {
   feature = metadata$feature[i]
@@ -75,6 +89,7 @@ for (i in 1:nrow(metadata)) {
     ctsCtrl <- getCounts(fit)$control
     post <- getPosteriors(fit)[,1]
     
+    #adjust binsize of fit to size of enrichment window
     binsize.fit = width(getRanges(fit))[2]
     if(is.na(a)){
       binsize.feature = table_genes$end - table_genes$start

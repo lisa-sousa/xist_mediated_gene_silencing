@@ -8,7 +8,9 @@ The repository is structured into four parts according to four main analysis ste
 
 #### fit_silencing_halftime
 This folder contains two scripts that are used to compute half-times for each gene. 
+
 a) *fit_halftimes.R*: computes half-times for the PRO-seq and mRNA-seq (undifferentiated and differentiated) data set; takes as input the allelic ratio from the PRO-seq/mRNA-seq experiment and the Gencode M9 gene annotation
+
 b) *fit_halftimes_pyrosequencing.R*: computes half-times for the 11 pyrosequencing candidate genes; takes as input the list of candidate genes and the allelic ratios from the pyrosequencing experiment
 
 #### chip_seq_analysis

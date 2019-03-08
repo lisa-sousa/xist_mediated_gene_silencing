@@ -1,4 +1,36 @@
+###################################################################################
+#libraries
+###################################################################################
 
+library(ggplot2)
+library(RColorBrewer)
+
+###################################################################################
+#directories
+###################################################################################
+
+output_dir = "/project/lncrna/Xist/plots/additional_analysis/"
+
+input_dir_clones = "/project/lncrna/Xist/data/modelling/model/clones/"
+predictions_clones = c("predictions_clones_86.txt","predictions_clones_87.txt","predictions_clones_109.txt","predictions_clones_190.txt","predictions_clones_228.txt","predictions_clones_273.txt")
+
+input_dir = "/project/lncrna/Xist/data/annotation_files/xist_transgenes/"
+clone = c("86","87","109","190","228","273")
+chr = c("chrX","chrX","chrX","chrX","chr12","chr12")
+
+###################################################################################
+#parameters
+###################################################################################
+
+pseudocount = 0.001
+thr_foldchange = c()
+B=1000
+
+###################################################################################
+#functions to calculate normalized AER, do permutation test and plot clone distribution
+###################################################################################
+
+###read in clone data -> AER
 get_clone_table <- function(file, chr){
   table_clone = read.table(file=file,header = T)
   table_clone = table_clone[grep(chr,table_clone$coord),]
@@ -7,6 +39,7 @@ get_clone_table <- function(file, chr){
   return(table_clone)
 }
 
+###calculate normalized AER
 get_foldchange <- function(input_dir,chr,clone,pseudocount){
   table_clone_no_Dox_rep1 = get_clone_table(paste(input_dir,chr,"_clones/",clone,"_noDox_1.txt",sep=""),chr)
   table_clone_no_Dox_rep2 = get_clone_table(paste(input_dir,chr,"_clones/",clone,"_noDox_2.txt",sep=""),chr)
@@ -28,6 +61,19 @@ get_foldchange <- function(input_dir,chr,clone,pseudocount){
   return(table_clone)
 }
 
+####Permutation test
+empirical_p_value <- function(B,table_clone_predictions,n,x){
+  fraction = rep(0,B)
+  for(i in 1:B){
+    boot_idx = sample(nrow(table_clone_predictions),n,replace = F)
+    boot_table = table_clone_predictions[boot_idx,]
+    fraction[i] = nrow(boot_table[boot_table$class == 0,])/nrow(boot_table)
+  }
+  p_value = sum(fraction > x)/B
+  return(list(p_value,fraction))
+}
+
+###scatterplot of normalized AER vs gene predictions
 scatterplot_dense_colors <- function(x1, x2, xlab, ylab, main){
   
   df = data.frame(x1,x2)
@@ -47,32 +93,9 @@ scatterplot_dense_colors <- function(x1, x2, xlab, ylab, main){
   abline(lm(x2~x1))
 }
 
-####Permutation test
-empirical_p_value <- function(B,table_clone_predictions,n,x){
-  fraction = rep(0,B)
-  for(i in 1:B){
-    boot_idx = sample(nrow(table_clone_predictions),n,replace = F)
-    boot_table = table_clone_predictions[boot_idx,]
-    fraction[i] = nrow(boot_table[boot_table$class == 0,])/nrow(boot_table)
-  }
-  p_value = sum(fraction > x)/B
-  return(list(p_value,fraction))
-}
-
-
-library(ggplot2)
-library(RColorBrewer)
-
-output_dir = "/project/lncrna/Xist/plots/additional_analysis/"
-input_dir_clones = "/project/lncrna/Xist/data/modelling/model/clones/"
-predictions_clones = c("predictions_clones_86.txt","predictions_clones_87.txt","predictions_clones_109.txt","predictions_clones_190.txt","predictions_clones_228.txt","predictions_clones_273.txt")
-
-input_dir = "/project/lncrna/Xist/data/annotation_files/xist_transgenes/"
-clone = c("86","87","109","190","228","273")
-chr = c("chrX","chrX","chrX","chrX","chr12","chr12")
-pseudocount = 0.001
-thr_foldchange = c()
-B=1000
+###################################################################################
+#perform permutation test and plot results
+###################################################################################
 
 pdf(paste(output_dir,"analysis_paper_loda_boxplots.pdf",sep=""),width = 10,height = 10)
 
@@ -91,8 +114,7 @@ for(i in 1:length(clone)){
   clone_fc[[i]] = table_clone_predictions$foldchange
   print(paste("genes with predictions:",nrow(table_clone_predictions)))
   
-  #thr_foldchange = as.numeric(quantile(table_clone_predictions$foldchange[table_clone_predictions$foldchange<1],0.85))
-  thr_foldchange = 0.91
+  thr_foldchange = 0.9
   table_clone_predictions_fc = table_clone_predictions[table_clone_predictions$foldchange < thr_foldchange,]
   print(paste("genes with fc <",thr_foldchange,"are: ",nrow(table_clone_predictions_fc)))
   
@@ -108,7 +130,6 @@ for(i in 1:length(clone)){
   
   cortest = cor.test(table_clone_predictions$vote,table_clone_predictions$foldchange)
   scatterplot_dense_colors(table_clone_predictions$vote,table_clone_predictions$foldchange,"vote(class0)","foldchange",paste("clone",clone[i],"\nr=",signif(cortest$estimate,3),"\np-value:",signif(cortest$p.value,3)))
-  #print(cortest)
 
   table_clone_predictions$class = as.factor(table_clone_predictions$class)
 
@@ -123,7 +144,7 @@ for(i in 1:length(clone)){
 
 }
 
-
+###calculate max density
 col = brewer.pal(6,"Set2")
 max = c()
 for(i in 1:length(clone)){
@@ -131,6 +152,7 @@ for(i in 1:length(clone)){
   max[i] = max(density$y)
 }
 
+###plot normalized AER distribution for each clone
 plot(density(clone_fc[[1]]),col=col[1],xlab = "foldchange",main="foldchange distribution per clone",ylim=c(0,max(max)),xlim=c(0,2))
 for(i in 2:length(clone)){
   lines(density(clone_fc[[i]]),col=col[i])
@@ -139,10 +161,12 @@ legend("topleft",legend = clone,col = col,lty=1)
 
 dev.off()
 
+###plot histogram and boxplots
+colnames(bootstrap_performance) = clone
+performance = data.frame(ind = factor(clone), y = clone_performance[,1]*100)
+mean = data.frame(ind = factor(clone), y = colMeans(bootstrap_performance)*100)
 
 pdf(paste(output_dir,"analysis_paper_loda_histogram_boxplot.pdf",sep=""))
-
-colnames(bootstrap_performance) = clone
 
 ggplot(stack(bootstrap_performance*100), aes(x = ind, y = values)) +  
   geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "grey",alpha = 0.7,outlier.shape = "",width=0.5) + 
@@ -154,9 +178,6 @@ ggplot(stack(bootstrap_performance*100), aes(x = ind, y = values)) +
   scale_x_discrete(name = "clone") + scale_y_continuous(name = "genes predicted as silenced (%)", limits = c(20,90)) +
   geom_point(data = data.frame(x = factor(clone), y = clone_performance[,1]*100),aes(x=x, y=y, size=15),color = 'red',pch="_",size=18)
 
-performance = data.frame(ind = factor(clone), y = clone_performance[,1]*100)
-mean = data.frame(ind = factor(clone), y = colMeans(bootstrap_performance)*100)
-
 ggplot(stack(bootstrap_performance*100), aes(x = values)) + 
   #geom_density(bw=.02, colour="black", fill="white") +
   geom_histogram(binwidth=0.9, colour="black", fill="white") + 
@@ -166,11 +187,6 @@ ggplot(stack(bootstrap_performance*100), aes(x = values)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
                           axis.text.x=element_text(size=10),axis.text.y=element_text(size=15),axis.title = element_text(face="bold", size=13),plot.margin = unit(c(2,2,2,2), "cm"))+
   scale_y_continuous(breaks=c(0,300),name = "# permutations") + scale_x_continuous(name="genes predicted as silenced (%)")
-
-
-# row.names(clone_performance) = clone
-# par(mfrow=c(1,1),mar=c(2,2,2,2),oma=c(5,5,5,5))
-# barplot(t(clone_performance),main="performance of clones",legend = c("true","false"),ylab="fraction of genes (%)",xlab="clone",las=2)
 
 dev.off()
 

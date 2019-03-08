@@ -1,20 +1,32 @@
-####directories and files 
+###################################################################################
+#directories and files
+###################################################################################
+
 file_mutant_fc = "/project/lncrna/Xist/data/annotation_files/xist_mutants/FC_Dox_noDox_table_all_mutants_norm.txt"
 file_cluster_matrix = "/project/lncrna/Xist/data/modelling/model/silencing_dynamics_model/results_thr_0.5_0.9_1.3/best_clustering_data_set_k3.RData"
 output_dir = "/project/lncrna/Xist/plots/additional_analysis/" 
 
-###load mutant data
+###################################################################################
+#load mutant data
+###################################################################################
+
 table_mutants = read.table(file=file_mutant_fc,header=T,sep="\t")
 mutants = c("WT","A","BC")
 
-###load cluster data
+###################################################################################
+#load cluster data
+###################################################################################
+
 load(file_cluster_matrix)
 table_cluster = data_set_plot
 table_cluster$gene = row.names(table_cluster)
 
 table = merge(table_mutants,table_cluster,by="gene")
 
-###plot foldchange vs cluster
+###################################################################################
+#plot foldchange vs cluster
+###################################################################################
+
 CairoPDF(file = "/project/lncrna/Xist/plots/additional_analysis/analysis_paper_mutants.pdf", width = 15, height = 15)
 par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))
 
@@ -30,6 +42,10 @@ for(i in 1:3){
   anova = aov(mutant ~ cluster, data = data_plot)
   print(TukeyHSD(anova))
 }
+
+###################################################################################
+#analysis mutant repeat A
+###################################################################################
 
 ###get change in silencing between WT and mutant
 ###mutanta A
@@ -67,7 +83,9 @@ independent = total_n_of_genes_in_each_cluster - dependent
 matrix = matrix(c(dependent[cluster1],dependent[cluster2],independent[cluster1],independent[cluster2]), nr=2)
 fisher.test(matrix)
 
-
+###################################################################################
+#analysis mutant repeat BC
+###################################################################################
 
 ###get change in silencing between WT and mutant
 ###mutanta B

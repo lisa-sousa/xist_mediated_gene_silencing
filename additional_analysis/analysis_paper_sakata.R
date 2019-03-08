@@ -1,21 +1,29 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(Cairo)
 library(ggplot2)
 
+###################################################################################
+#directories and files
+###################################################################################
 
-####directories and files 
 CAGdelta5_file = "/project/lncrna/Xist/data/annotation_files/CAGdelta5/GSE93031_allelic_expression.txt"
 model_matrix_file = "/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData"
 clustering_matrix = "/project/lncrna/Xist/data/modelling/model/silencing_dynamics_model/results_thr_0.5_0.9_1.3/best_clustering_data_set_k3.RData"
 output_dir = "/project/lncrna/Xist/plots/additional_analysis/" 
 
+###################################################################################
+#load CAGdelta5 data
+###################################################################################
 
-####CAGdelta5 data
 table = read.table(file = CAGdelta5_file,sep='\t',header=T)
 table_CAGdelta5 = table[,c(1,2,7)]
 table_CAGdelta5_chrX = table_CAGdelta5[table_CAGdelta5$chrom=="chrX",]
 table_CAGdelta5_chrX = na.omit(table_CAGdelta5_chrX)
 
-#threhold for silenced vs not silenced as defined in the paper
+#threhold for silenced vs not silenced as defined in Sakata et. al.
 thr_silencing = 10
 
 genes_CAGdetla5_silenced = table_CAGdelta5_chrX$gene[table_CAGdelta5_chrX$avePat.CAGdelta5 <= thr_silencing]
@@ -24,14 +32,19 @@ genes_CAGdetla5_silenced = as.character(genes_CAGdetla5_silenced)
 genes_CAGdetla5_not_silenced = table_CAGdelta5_chrX$gene[table_CAGdelta5_chrX$avePat.CAGdelta5 > thr_silencing]
 genes_CAGdetla5_not_silenced = as.character(genes_CAGdetla5_not_silenced)
 
+###################################################################################
+#load feature matrix
+###################################################################################
 
-###load feature matrix
 load(model_matrix_file)
 table_halftimes = data.frame(gene = rownames(data_set), halftime = halftime)
 
 table_halftimes_silenced = table_halftimes[table_halftimes$gene %in% genes_CAGdetla5_silenced,]
 table_halftimes_not_silenced = table_halftimes[table_halftimes$gene %in% genes_CAGdetla5_not_silenced,]
 
+###################################################################################
+#generate plots
+###################################################################################
 
 ####plot distribution and kumulative distribution of halftime for silenced vs not silenced CAGdelta5 genes
 plot_file = paste(output_dir,"analysis_cag_delta_5.pdf",sep="")
@@ -52,6 +65,10 @@ legend('bottomright',legend = c('CAGdelta5 silenced genes','CAGdelta5 not silenc
 ###barplot of into which clusters (silenced vs not silenced model) the CAGdelta5 silenced genes fall
 load(clustering_matrix)
 data_set_plot$cluster = as.numeric(data_set_plot$cluster)
+
+###################################################################################
+#calculate fration of repeat A dependent and independent genes per cluster
+###################################################################################
 
 #select genes that are silenced in CAGdelta5 mutant
 matrix_CAGdelta5_silenced = data_set_plot[rownames(data_set_plot) %in% genes_CAGdetla5_silenced,]

@@ -1,5 +1,13 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(Cairo)
 library(ggplot2)
+
+###################################################################################
+#load data
+###################################################################################
 
 load('/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData')
 table_halftimes = data.frame(gene = rownames(data_set), halftime = halftime)
@@ -8,6 +16,10 @@ table_marks_paper = read.table(file = '/project/lncrna/Xist/data/annotation_file
 colnames(table_marks_paper) = c('gene','silencing_class')
 
 table = merge(table_halftimes,table_marks_paper,by='gene')
+
+###################################################################################
+#plot boxplots
+###################################################################################
 
 CairoPDF(file = "/project/lncrna/Xist/plots/additional_analysis/analysis_paper_marks.pdf", width = 15, height = 15)
 par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))

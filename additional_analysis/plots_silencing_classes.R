@@ -1,6 +1,13 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(Cairo)
 library(ggplot2)
 
+###################################################################################
+#load data
+###################################################################################
 
 table_halftimes = read.table("/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed")
 halftimes = table_halftimes$V5
@@ -14,6 +21,10 @@ data_plot = data.frame(halftime = early, silencing_class = rep("early",length(ea
 data_plot = rbind(data_plot, data.frame(halftime = late, silencing_class = rep("late",length(late))))
 data_plot = rbind(data_plot, data.frame(halftime = silenced, silencing_class = rep("silenced",length(silenced))))
 data_plot = rbind(data_plot, data.frame(halftime = not_silenced, silencing_class = rep("not_silenced",length(not_silenced))))
+
+###################################################################################
+#boxplot of different silncing classes
+###################################################################################
 
 CairoPDF(file = "/project/lncrna/Xist/plots/additional_analysis/boxplots_silencing_classes.pdf", width = 15, height = 15)
 par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))

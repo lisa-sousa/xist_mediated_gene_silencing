@@ -1,7 +1,6 @@
-
-################
+###################################################################################
 #functions
-################
+###################################################################################
 
 remove_na_columns <- function(x){
   x = x[sapply(x, function(x) !any(is.na(x)))] 
@@ -46,9 +45,9 @@ plot_expression <- function(time,expression,gene){
   lines(time,expression[[2]],col="darkblue")
 }
 
-################
-#PRO-Seq
-################
+###################################################################################
+#plot allele-specific expression for PRO-seq data
+###################################################################################
 
 pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression.pdf")
 
@@ -69,9 +68,9 @@ plot_expression(time,expression,"Tsix")
 
 dev.off()
 
-################
-#mRNA-Seq undiff
-################
+###################################################################################
+#plot allele-specific expression for undifferentiated mRNA-seq data
+###################################################################################
 
 pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_undifferentiated.pdf")
 
@@ -94,10 +93,9 @@ plot_expression(time,expression,"Tsix")
 
 dev.off()
 
-
-################
-#mRNA-Seq diff
-################
+###################################################################################
+#plot allele-specific expression for differentiated mRNA-seq data
+###################################################################################
 
 pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_differentiated.pdf")
 

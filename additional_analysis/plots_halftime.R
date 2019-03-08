@@ -1,8 +1,13 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(Cairo)
 
-######
-#pro-seq
-######
+###################################################################################
+#PRO-seq
+###################################################################################
+
 halftimes_file = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed'
 halftimes_table = read.table(file = halftimes_file, sep = '\t', header = F)
 colnames(halftimes_table) = c('chr','start','end','gene_name','halftime','strand')
@@ -29,11 +34,10 @@ plot(halftimes_table$TSS, halftimes_table$halftime, main='PRO-Seq', pch = '*', c
 lines(halftimes_table$TSS,smooth(halftimes_table$halftime),col='black')
 abline(v=100678572,col='darkorange') #TSS of Xist on mm9
 
+###################################################################################
+#mRNA-seq undifferentiated
+###################################################################################
 
-
-######
-#mrna-seq undiff
-######
 mrna_seq_undiff_file = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_undiff_mm9_reannotated_with_rr.bed"
 mrna_seq_undiff_table = read.table(file = mrna_seq_undiff_file, sep = '\t', header = F)
 colnames(mrna_seq_undiff_table) = c('chr','start','end','gene_name','halftime','strand')
@@ -51,10 +55,10 @@ plot(mrna_seq_undiff_table$TSS, mrna_seq_undiff_table$halftime, main='mRNA-Seq u
 lines(mrna_seq_undiff_table$TSS,smooth(mrna_seq_undiff_table$halftime),col='black')
 abline(v=100678572,col='darkorange') #TSS of Xist on mm9
 
+###################################################################################
+#mRNA-seq differentiated
+###################################################################################
 
-######
-#mrna-seq diff
-######
 mrna_seq_diff_file = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_diff_mm9_reannotated_with_rr.bed"
 mrna_seq_diff_table = read.table(file = mrna_seq_diff_file, sep = '\t', header = F)
 colnames(mrna_seq_diff_table) = c('chr','start','end','gene_name','halftime','strand')

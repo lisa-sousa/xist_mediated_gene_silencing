@@ -1,6 +1,14 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(Cairo)
 library(gplots)
 library(corrplot)
+
+###################################################################################
+#data and directories
+###################################################################################
 
 output_directory = '/project/lncrna/Xist/plots/'
 
@@ -19,16 +27,16 @@ colnames(data_matrix) = gsub('_GSE[0-9]*_.*','',colnames(data_matrix),perl=T)
 colnames(data_matrix) = gsub('_ENCODE_.*','',colnames(data_matrix),perl=T)
 colnames(data_matrix) = gsub('_GLIB_.*','',colnames(data_matrix),perl=T)
 
-############################
-##########correlation plots
-############################
+###################################################################################
+#correlation plots
+###################################################################################
 
 estWidth <- max(10 * log(ncol(data_matrix)), 2)
 estHeight <- max(10 * log(ncol(data_matrix)), 2)
 file_name = "correlation.pdf"
 CairoPDF(file=paste(output_directory,file_name,sep="/"), width = estWidth, height = estHeight)
 
-#blue-red correlation matrix with correlation values printed in each box
+#correlation matrix with correlation values printed in each box
 corResults = cor(data_matrix)
 corResults = round(corResults,2)
 
@@ -49,12 +57,12 @@ axis(2,at=a,labels=colnames(corResults),las=2)
 text(y,x,round(unlist(as.list(corResults)),2),cex=0.4)
 
 
-#Blue-red correlation matrix with sorted entries (based on correlation)
+#correlation matrix with sorted entries (based on correlation)
 par(mar=c(40,4,4,2)) 
 heatmap.2(cor(data_matrix), cexRow=1.7, cexCol=1.7, col="bluered", trace="none", margins=c(22,20), dendrogram="none", key=TRUE, symkey=FALSE, density.info="none")
 
 
-#stylisch correlation plot
+#correlation matrix with sorted entries (based on correlation) and points in size of correlation
 par(mar=c(10,10,4,2),oma=c(2,2,0,0)) 
 corrplot(cor(data_matrix),order='hclust', col=colorRampPalette(c('blue','white','red'))(200),diag=F,cl.cex=1.7,tl.cex=1.7,tl.col = "black")
 

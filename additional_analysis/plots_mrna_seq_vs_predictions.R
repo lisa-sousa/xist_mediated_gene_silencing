@@ -1,6 +1,6 @@
-##################################
-#read data
-##################################
+###################################################################################
+#load data
+###################################################################################
 
 predictions = read.table("/project/lncrna/Xist/data/modelling/model/xci_escape_model/results_thr_0.9_-_1.6/random_forest_predictions_new_genes.txt",header = T)
 mrna_seq = read.table("/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_undiff_mm10.bed", header = F)
@@ -10,9 +10,9 @@ table = merge(predictions,mrna_seq,by="Genes")
 table = table[!(table$class > 0 & table$class < 1),] #remove instable predictions
 table$class = as.factor(table$class)
 
-##################################
+###################################################################################
 #plotting function
-##################################
+###################################################################################
 
 scatterplot_dense_colors <- function(x1, x2, xlab, ylab, main){
   
@@ -32,9 +32,9 @@ scatterplot_dense_colors <- function(x1, x2, xlab, ylab, main){
   abline(lm(x2~x1))
 }
 
-##################################
+###################################################################################
 #generate plots
-##################################
+###################################################################################
 
 pdf("/project/lncrna/Xist/plots/additional_analysis/mRNA_seq_vs_predictions.pdf",height = 2,width = 2)
 
@@ -47,7 +47,6 @@ ggplot(data=table,aes(x=class, y=halftime)) +
   geom_segment(aes(x=1,xend=2,y=4,yend=4)) +
   theme_minimal() + theme(text=element_text(size=8), panel.grid.minor = element_blank())+ scale_y_continuous(limits=c(0,5),breaks=c(0,2,4,6), name='Halftime [days]') + 
   scale_x_discrete (name='Predicted Class')
-#boxplot(table$halftime ~ table$class, main=paste("Wilcox test:",wilcox))
 
 vote = 1-table$vote
 cor = cor.test(vote, table$halftime)

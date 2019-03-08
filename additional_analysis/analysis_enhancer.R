@@ -1,12 +1,23 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(reshape2)
 library(ggplot2)
 library(gridExtra)
 
+###################################################################################
+#input directories
+###################################################################################
 
 dir_data = "/Users/lisa/Desktop/data/"
 dir_enhancers = paste(dir_data,"annotation_files/enhancers/",sep="")
 file_HiCap_enhancers = "Promoter_Enhancer_Interactions.txt"
 file_output = "gene_enhancers.bed"
+
+###################################################################################
+#extend enhancer regions to 1000bp around enhancer center if enhancer length < 1000 
+###################################################################################
 
 hicap_enhancers = read.table(paste(dir_enhancers,file_HiCap_enhancers,sep=""),header = T, sep = "\t")
 hicap_enhancers_chrX = hicap_enhancers[hicap_enhancers$Promoter.chr == "chrX" & hicap_enhancers$Fragment.chromosome == "chrX",]
@@ -22,15 +33,67 @@ enhancer_bed$enhancer_length = abs(enhancer_bed$start-enhancer_bed$end)
 
 write.table(enhancer_bed[1:6],paste(dir_enhancers,file_output,sep=""),col.names = F, row.names = F, sep="\t",quote = F)
 
+###################################################################################
+# create data matrix for enhancers with script: create_feature_matrix.R (Attention: multiple enhancer for one gene possible)
+###################################################################################
 
-#######
-#-> map chip-seq data
-#-> create data matrix
-#######
+###################################################################################
+#load enhancer matrix and create different enhancer sets (all, strongest, closest) 
+###################################################################################
 
-##############
-#function
-##############
+output_dir = "/Users/lisa/work_stuff/projects/xist_epigenetics/computing/plots/additional_analysis/"
+file_halftimes = paste(dir_data,"silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt",sep="")
+file_feature_matrix = paste(dir_data,"modelling/feature_matrix/promoter_matrix_normRAdjusted_enhancer.RData",sep="")
+
+hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_strength_HiC_promoter","mean_interaction_strength_HiC_xist")
+
+thr_silencing_lower = 0.9
+thr_silencing_middle = "-"
+thr_silencing_upper = 1.6
+
+halftimes = read.table(file_halftimes,header=T)
+
+load(file_feature_matrix)
+colnames(data_set)[1] = "Genes"
+data_set$enhancer_strength = halftime
+data_set = cbind(data_set,enhancer_bed[,c(2,3,8)])
+data_set = merge(halftimes,data_set,by="Genes")
+data_set = data_set[data_set$halftime < thr_silencing_lower | data_set$halftime > thr_silencing_upper,]
+data_set$target = 0
+data_set$target[data_set$halftime > thr_silencing_upper] = 1
+
+#all enhancers
+data_set_all = cbind(data_set[,10:86],target=data_set$target,halftime=data_set$halftime)
+n = ncol(data_set_all)-2
+
+#choose strongest enhancer
+data_set_strong = data_set
+genes = unique(as.character(data_set_strong$Genes[duplicated(data_set_strong$Genes)]))
+for(i in 1:length(genes)){
+  entry = data_set_strong[data_set_strong$Genes==genes[i],]
+  max = max(entry$enhancer_strength)
+  data_set_strong = data_set_strong[!(data_set_strong$Genes==genes[i] & data_set_strong$enhancer_strength != max),]
+}
+data_set_strong = data_set_strong[!duplicated(data_set_strong),]  
+data_set_strong = cbind(data_set_strong[,10:86],target=data_set_strong$target,halftime=data_set_strong$halftime)
+
+#choose closest enhancer per gene
+data_set_close = data_set
+genes = unique(as.character(data_set_close$Genes[duplicated(data_set_close$Genes)]))
+data_set_close$TSS = 0
+data_set_close$TSS[data_set_close$Strand == "+"] = data_set_close$Start[data_set_close$Strand == "+"]
+data_set_close$TSS[data_set_close$Strand == "-"] = data_set_close$End[data_set_close$Strand == "-"]
+for(i in 1:length(genes)){
+  entry = data_set_close[data_set_close$Genes==genes[i],]
+  enhancer_start = entry$start[which.min(abs(entry$TSS-entry$enhancer_center))]
+  data_set_close = data_set_close[!(data_set_close$Genes==genes[i] & data_set_close$start != enhancer_start),]
+}
+data_set_close = data_set_close[!duplicated(data_set_close),]  
+data_set_close = cbind(data_set_close[,10:86],target=data_set_close$target,halftime=data_set_close$halftime)
+
+###################################################################################
+#plotting functions 
+###################################################################################
 
 get_wilcox_p_value <- function(column){
   feature0 = column[column$feature==0,] # the feature
@@ -123,61 +186,11 @@ plot_continuous_feature <- function(feature,column_all,column_strongest,column_c
   return(ggbox)
 }
 
-###############
-#enhancer sets
-###############
 
-output_dir = "/Users/lisa/work_stuff/projects/xist_epigenetics/computing/plots/additional_analysis/"
-file_halftimes = paste(dir_data,"silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt",sep="")
-file_feature_matrix = paste(dir_data,"modelling/feature_matrix/promoter_matrix_normRAdjusted_enhancer.RData",sep="")
+###################################################################################
+#generate plots for features at enhancer 
+###################################################################################
 
-hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_strength_HiC_promoter","mean_interaction_strength_HiC_xist")
-
-thr_silencing_lower = 0.9
-thr_silencing_middle = "-"
-thr_silencing_upper = 2
-
-halftimes = read.table(file_halftimes,header=T)
-
-load(file_feature_matrix)
-colnames(data_set)[1] = "Genes"
-data_set$enhancer_strength = halftime
-data_set = cbind(data_set,enhancer_bed[,c(2,3,8)])
-data_set = merge(halftimes,data_set,by="Genes")
-data_set = data_set[data_set$halftime < thr_silencing_lower | data_set$halftime > thr_silencing_upper,]
-data_set$target = 0
-data_set$target[data_set$halftime > thr_silencing_upper] = 1
-
-data_set_all = cbind(data_set[,10:86],target=data_set$target,halftime=data_set$halftime)
-n = ncol(data_set_all)-2
-
-#choose strongest enhancer
-data_set_strong = data_set
-genes = unique(as.character(data_set_strong$Genes[duplicated(data_set_strong$Genes)]))
-for(i in 1:length(genes)){
-  entry = data_set_strong[data_set_strong$Genes==genes[i],]
-  max = max(entry$enhancer_strength)
-  data_set_strong = data_set_strong[!(data_set_strong$Genes==genes[i] & data_set_strong$enhancer_strength != max),]
-}
-data_set_strong = data_set_strong[!duplicated(data_set_strong),]  
-data_set_strong = cbind(data_set_strong[,10:86],target=data_set_strong$target,halftime=data_set_strong$halftime)
-  
-#choose closest enhancer per gene
-data_set_close = data_set
-genes = unique(as.character(data_set_close$Genes[duplicated(data_set_close$Genes)]))
-data_set_close$TSS = 0
-data_set_close$TSS[data_set_close$Strand == "+"] = data_set_close$Start[data_set_close$Strand == "+"]
-data_set_close$TSS[data_set_close$Strand == "-"] = data_set_close$End[data_set_close$Strand == "-"]
-for(i in 1:length(genes)){
-  entry = data_set_close[data_set_close$Genes==genes[i],]
-  enhancer_start = entry$start[which.min(abs(entry$TSS-entry$enhancer_center))]
-  data_set_close = data_set_close[!(data_set_close$Genes==genes[i] & data_set_close$start != enhancer_start),]
-}
-data_set_close = data_set_close[!duplicated(data_set_close),]  
-data_set_close = cbind(data_set_close[,10:86],target=data_set_close$target,halftime=data_set_close$halftime)
-
-
-##plots boxplots
 pdf(paste(output_dir,"enhancer_boxplots.pdf",sep=""),height = 20, width = 20)
 
 boxplots = list()
@@ -204,13 +217,11 @@ for(i in 1:(ncol(data_set_all)-2)){
     boxplots[[i]] = plot_continuous_feature(feature,column_all,column_strongest,column_close,n)
   }
 }
-
 print(boxplots)
-
 dev.off()
 
-##plots boxplots of specific features
 
+##plots boxplots of specific features
 pdf(paste(output_dir,"enhancer_boxplots.pdf",sep=""),height = 20, width = 20)
 
 boxplots = list()
@@ -241,7 +252,5 @@ for(j in 1:length(colnumbers)){
     boxplots[[j]] = plot_continuous_feature(feature,column_all,column_strongest,column_close,n)
   }
 }
-
 grid.arrange(grobs=boxplots, nrow = 4)
-
 dev.off()

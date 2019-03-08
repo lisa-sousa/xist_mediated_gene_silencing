@@ -1,8 +1,14 @@
+###################################################################################
+#libraries
+###################################################################################
+
 library(biomaRt)
 library(rtracklayer)
 
+###################################################################################
+#process downloaded gencode file https://www.gencodegenes.org/mouse_releases/
+###################################################################################
 
-##########process downloaded gencode file https://www.gencodegenes.org/mouse_releases/
 gene_annotation_gencode = read.table(file="/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.gtf", sep = "\t")
 gene_annotation_gencode = gene_annotation_gencode[gene_annotation_gencode$V3 == "gene",]
 gene_annotation_gencode = gene_annotation_gencode[gene_annotation_gencode$V1 == "chrX",]
@@ -26,8 +32,9 @@ colnames(gene_annotation_gencode) = c("chr","start","end","name","score","strand
 gene_annotation_gencode = gene_annotation_gencode[order(gene_annotation_gencode$name),]
 write.table(gene_annotation_gencode, file='/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.bed', sep='\t', quote = F, col.names = F, row.names = F)
 
-
-#######get genes from ensemble
+###################################################################################
+#get genes from ensemble
+###################################################################################
 
 ##mm9 genome
 ensembl <- useEnsembl(biomart="ensembl", version = 67, dataset = "mmusculus_gene_ensembl")
@@ -51,8 +58,9 @@ gene_annotation$chromosome_name = paste('chr',gene_annotation$chromosome_name,se
 gene_annotation$strand[gene_annotation$strand == -1] = '-'
 gene_annotation$strand[gene_annotation$strand == 1] = '+'
 
-
-#######get genes from ucsc
+###################################################################################
+#get genes from ucsc
+###################################################################################
 
 session <- browserSession()
 genome(session) <- "mm9"

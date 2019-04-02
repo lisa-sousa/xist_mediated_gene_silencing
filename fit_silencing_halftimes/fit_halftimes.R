@@ -6,6 +6,9 @@ library(rtracklayer)
 library(GenomicRanges)
 library(gplots)
 library(Cairo)
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
 
 ###################################################################################
 #input files
@@ -57,43 +60,64 @@ fitting_function <- function(t, start) {
 #normalize data and fit half-times with exponential decay function
 fit_data <- function(data,pseudo_count,time,fitted_data,control){
   for (i in 1:nrow(data)) {
-
+    
     # Transform the data such that you can fit relative reads from BL6
     data_trans = as.numeric(data[i,])
     data_trans = ((1-data_trans[1])/data_trans[1]) * (data_trans/(1-data_trans+pseudo_count))
     data_trans = data.frame(time = time, expression = data_trans)
     
-    
     fitnl=nls(expression ~ fitting_function(time,k), data=data_trans, start=list(k=1),control=control, algorithm='port',lower=c(k=1/5))
     k = abs(coef(fitnl)[1])
     fitted_data$halftime[i] = log(2)/k
-    
     fitted_data$RSS[i] = sqrt(sum(resid(fitnl)^2))
     
-    plot(data_trans$time,data_trans$expression,xlim=c(-0.2, 1.2),ylim=c(0,1.2),xlab='time [days]', ylab='BL6',main=fitted_data$Genes[i])
-    lines(seq.int(0,1,0.01), fitting_function(seq.int(0,1,0.01),k),lwd=2)
-    legend('topright',legend = paste('square root RSS=',round(sqrt(sum(resid(fitnl)^2)),2),'\nhalftime=',round(log(2)/k,2)))
+    plot_fit(data_trans,k,as.character(fitted_data$Genes[i]))
+    
   }
   return(fitted_data)
 }
 
+#plot fitted data
+plot_fit <- function(data_trans,k,gene){
+  halftime_label = bquote(t[1/2] == .(as.double(round(log(2)/k,2)))~d)
+  ggplot = ggplot(data_trans, aes(x=time, y=expression)) + 
+    geom_point() + 
+    stat_function(fun=fitting_function, args = list(k)) + 
+    geom_text(aes(x=0.1,y=0.1),label=deparse(halftime_label),parse=T,size=2.5,hjust=0) +
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=6), axis.title=element_text(size=7), 
+          plot.title=element_text(size=8,hjust = 0.5,face="italic")) + 
+    scale_x_continuous(limits=c(0,max(data_trans$time)),breaks=c(0,max(data_trans$time)/2,max(data_trans$time)), name='time [days]')  + 
+    scale_y_continuous(limits=c(0,1.2),breaks=c(0,0.5,1), name='norm. B6 expression') + 
+    ggtitle(gene)
+  print(ggplot)
+}
+
 #plot raw data sorted by genomic position
 plot_ratios <- function(data){
-
+  
   data_sorted = data[order(data$Start),]
   matrix = as.matrix(data_sorted[,grep('Ratio',colnames(data_sorted))])
   rownames(matrix) = data_sorted$Genes
+  colnames(matrix)=gsub("Dox30min[A-z,0-9]*","Dox 0.5h",gsub("NoDox([A-z]{1})[A-z,0-9]*","No Dox \\1",gsub("h([A-z]+)","h \\1",gsub("Dox([0-9]*)hr([A-z]?)_[A-z,0-9]*","Dox \\1h\\2",colnames(matrix),perl = T))))
+  matrix = matrix[,ncol(matrix):1]
   
-  #define colors ranges 
-  idx_low = round(min(matrix),2)*100
-  idx_high = round(max(matrix),2)*100
-  color = bluered(100)[idx_low:idx_high]
+  require(reshape2)
+  matrix = melt(t(matrix))
   
-  par(oma=c(8,1,1,1))
-  heatmap.2(x=matrix, Rowv=NULL,Colv=NULL, col = color, scale='none', margins=c(3,0), trace='none', symkey=FALSE, symbreaks=FALSE, dendrogram='none', density.info='histogram', 
-            denscol='black', keysize=1, key.par=list(mar=c(3.5,0,3,0)), lmat=rbind(c(5, 4, 2), c(6, 1, 3)), lhei=c(1, 5), lwid=c(3, 10, 3), cexCol = 1,cexRow = 0.25)
+  # Create the heatmap
+  ggplot = ggplot(matrix, aes(Var2, Var1, fill = value)) +
+    geom_tile(colour="white", size = 0.01) +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5, limit = c(0,1), 
+                         space = "Lab",breaks = c(0,0.5,1),name="fraction of reads\nexpressed from \nB6 allele") + # Change gradient color
+    theme_minimal(base_family = "Source Sans Pro",base_size=8) +
+    theme(axis.text.x = element_text(size = 7),axis.text.y = element_text(size = 7), legend.position="bottom", legend.margin = margin(t = 0, unit='cm'), 
+          legend.text = element_text(size=7), legend.title = element_text(size=8), axis.title=element_text(size=8),plot.background=element_blank(),panel.border=element_blank())+
+    coord_fixed(ratio=5) + xlab("genes (sorted by genomic location)") + ylab("time point") + 
+    scale_y_discrete(position = "right",expand = c(0, 0)) + scale_x_discrete(breaks = c("Tsix"),labels = expression(italic(Xist)~'locus'),expand = c(0, 0)) +
+    geom_vline(aes(xintercept = which(data_sorted$Genes=="Tsix")),size=0.7,alpha=0.6)
+  return(ggplot)
 }
-
 
 ###################################################################################
 ####fit PRO-Seq data
@@ -122,7 +146,7 @@ pro_seq_gene_ratios = pro_seq_data_chrX[,grep('Ratio',colnames(pro_seq_data_chrX
 pro_seq_gene_ratios = data.frame(NoDox_BL6_Ratio = rowMeans(pro_seq_gene_ratios[,1:2]),pro_seq_gene_ratios[,3:8],Dox24hr_BL6_Ratio = rowMeans(pro_seq_gene_ratios[,9:10]))
 
 #fit the data
-CairoPDF(paste(output_dir_plot,'pro_seq_fit.pdf',sep=''),width = 7,height = 7)
+cairo_pdf(paste(output_dir_plot,'pro_seq_fit.pdf',sep=''),width = 2,height = 2, onefile = TRUE)
 fitted_data_pro_seq = data.frame(pro_seq_data_chrX[,c(2,4,5,1)],halftime = rep(-1,length(pro_seq_genes)),Strand = pro_seq_data_chrX[,3],
                                  RPKM = rowMeans(pro_seq_data_chrX[,c(10,15)]),initial_ratio = initial_ratio[pro_seq_genes],RSS = rep(-1,length(pro_seq_genes)))
 fitted_data_pro_seq = fit_data(pro_seq_gene_ratios,pseudo_count,time,fitted_data_pro_seq,control)
@@ -139,10 +163,9 @@ mcols(gene_regions_pro_seq) = data.frame(name = fitted_data_pro_seq_filtered$Gen
 write.table(fitted_data_pro_seq_filtered,file=file_pro_seq_all,sep='\t',col.names=T,row.names=F,quote=F)
 export.bed(gene_regions_pro_seq, con=file_pro_seq_halftimes, format='bed')	
 
-CairoPDF(paste(output_dir_plot,'pro_seq_ratios.pdf',sep=''),width = 10,height = 20)
-plot_ratios(pro_seq_data_chrX)
+cairo_pdf(paste(output_dir_plot,'pro_seq_ratios.pdf',sep=''),width = 6,height = 2)
+print(plot_ratios(pro_seq_data_chrX))
 dev.off()
-
 
 ###################################################################################
 ####fit undifferentiated mRNA-Seq data
@@ -169,7 +192,7 @@ mrna_seq_undiff_data_chrX = merge(gene_annotation,mrna_seq_undiff_data_chrX,by='
 mrna_seq_undiff_gene_ratios = mrna_seq_undiff_data_chrX[,grep('Ratio',colnames(mrna_seq_undiff_data_chrX))]
 
 #fit the data
-CairoPDF(paste(output_dir_plot,'mrna_seq_undiff_fit.pdf',sep=''),width = 7,height = 7)
+cairo_pdf(paste(output_dir_plot,'mrna_seq_undiff_fit.pdf',sep=''),width = 2,height = 2, onefile = TRUE)
 fitted_data_mrna_seq_undiff = data.frame(mrna_seq_undiff_data_chrX[,c(2,3,4,1)],halftime = rep(-1,length(mrna_seq_undiff_genes)),Strand = mrna_seq_undiff_data_chrX[,6],
                                   RPKM = rowMeans(mrna_seq_undiff_data_chrX[,c(10,15)]),initial_ratio = initial_ratio[mrna_seq_undiff_genes],RSS = rep(-1,length(mrna_seq_undiff_genes)))
 fitted_data_mrna_seq_undiff = fit_data(mrna_seq_undiff_gene_ratios,pseudo_count,time,fitted_data_mrna_seq_undiff,control)
@@ -201,8 +224,8 @@ mrna_seq_undiff_genes = which((initial_ratio > 0.2) & (initial_ratio < 0.8))
 mrna_seq_undiff_data_chrX = mrna_seq_undiff_data_chrX[mrna_seq_undiff_genes,]
 mrna_seq_undiff_data_chrX = merge(gene_annotation,mrna_seq_undiff_data_chrX,by='Genes')
 
-CairoPDF(paste(output_dir_plot,'mrna_seq_undiff_ratios.pdf',sep=''),width = 10,height = 20)
-plot_ratios(mrna_seq_undiff_data_chrX)
+cairo_pdf(paste(output_dir_plot,'mrna_seq_undiff_ratios.pdf',sep=''),width = 6,height = 2)
+print(plot_ratios(mrna_seq_undiff_data_chrX))
 dev.off()
 
 ###################################################################################
@@ -234,7 +257,7 @@ mrna_seq_diff_gene_ratios = data.frame(NoDox_Ratio = rowMeans(mrna_seq_diff_gene
                                        Dox48hr_Ratio = rowMeans(mrna_seq_diff_gene_ratios[,9:10]))
 
 #fit the data
-CairoPDF(paste(output_dir_plot,'mrna_seq_diff_fit.pdf',sep=''),width = 7,height = 7)
+cairo_pdf(paste(output_dir_plot,'mrna_seq_diff_fit.pdf',sep=''),width = 2,height = 2, onefile = TRUE)
 fitted_data_mrna_seq_diff = data.frame(mrna_seq_diff_data_chrX[,c(2,3,4,1)],halftime = rep(-1,length(mrna_seq_diff_genes)),Strand = mrna_seq_diff_data_chrX[,6],
                                   RPKM = rowMeans(mrna_seq_diff_data_chrX[,c(9,10)]),initial_ratio = initial_ratio[mrna_seq_diff_genes],RSS = rep(-1,length(mrna_seq_diff_genes)))
 fitted_data_mrna_seq_diff = fit_data(mrna_seq_diff_gene_ratios,pseudo_count,time,fitted_data_mrna_seq_diff,control)
@@ -252,6 +275,124 @@ write.table(fitted_data_mrna_seq_diff_filtered,file=file_mrna_seq_diff_all,sep='
 export.bed(gene_regions_mrna_seq_diff, con=file_mrna_seq_diff_halftimes, format='bed')	
 
 
-CairoPDF(paste(output_dir_plot,'mrna_seq_diff_ratios.pdf',sep=''),width = 10,height = 20)
-plot_ratios(mrna_seq_diff_data_chrX)
+cairo_pdf(paste(output_dir_plot,'mrna_seq_diff_ratios.pdf',sep=''),width = 6,height = 2)
+print(plot_ratios(mrna_seq_diff_data_chrX))
 dev.off()
+
+###################################################################################
+####plots for paper
+###################################################################################
+
+ggplot = list()
+
+#### plot example for fitting half-times
+time = c(0,0.5,1,2,4,8,12,24)/24
+expression = c(1,0.9,0.85,0.8,0.7,0.6,0.5,0.4)
+data_trans =  data.frame(time = time, expression = expression)
+fitnl=nls(expression ~ fitting_function(time,k), data=data_trans, start=list(k=1),control=control, algorithm='port',lower=c(k=1/5))
+k = abs(coef(fitnl)[1])
+
+halftime_label = bquote(t[1/2] == ln(2)/k)
+function_label  = expression(paste("N(t)=e"^"-k*t"))
+ggplot[[1]] = ggplot(data_trans, aes(x=time, y=expression)) + 
+  geom_point(aes(colour="data"),size=1) + 
+  stat_function(aes(colour="fitted curve"),fun=fitting_function, args = list(k)) + 
+  geom_text(aes(x=1,y=0.6),label=deparse(halftime_label),parse=T,size=2.5,hjust=1,vjust=0) +
+  geom_text(aes(x=1,y=0.9),label=function_label,size=2.5,hjust=1,vjust=1) +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), axis.title=element_text(size=8), 
+        legend.text = element_text(size=8),legend.position = "top") + 
+  scale_x_continuous(limits=c(0,max(data_trans$time)),breaks=c(0,max(data_trans$time)/2,max(data_trans$time)), name='time [days]')  + 
+  scale_y_continuous(limits=c(0,1.2),breaks=c(0,0.5,1), name='norm. B6 expression') +
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.52, yend = 0.5), linetype="dashed",size = 0.3) +
+  geom_segment(aes(x = 0.52, y = 0.5, xend = 0.52, yend = 0), linetype="dashed",size = 0.3) +
+  scale_colour_manual(name='', values=c('data'='#71c837', 'fitted curve'='black', guide='legend')) +
+  guides(fill = guide_legend(override.aes = list(linetype = 1, shape=''),nrow=3), colour = guide_legend(override.aes = list(linetype=c(0,1), shape=c(16,NA)),nrow=3))
+
+#####plot example genes for fitting
+example_genes = c("Otud5", "Piga", "Stard8")
+data_trans_all = pro_seq_gene_ratios[pro_seq_data_chrX$Genes %in% example_genes,]
+data_trans_all = ((1-data_trans_all[,1])/data_trans_all[,1]) * (data_trans_all/(1-data_trans_all+pseudo_count))
+k = c()
+
+for (i in 1:length(example_genes)) {
+  data_trans = data.frame(time = time, expression = as.numeric(data_trans_all[i,]))
+  fitnl=nls(expression ~ fitting_function(time,k), data=data_trans, start=list(k=1),control=control, algorithm='port',lower=c(k=1/5))
+  k[i] = abs(coef(fitnl)[1])
+}
+
+data_trans_all$gene = example_genes
+plot_data = melt(data_trans_all,id.vars = "gene", measure.vars = colnames(data_trans_all)[1:(ncol(data_trans_all)-1)])
+plot_data$variable = rep(time,each=3)
+
+halftime_label = c(bquote(italic(.(example_genes[1]))~":"~t[1/2] == .(as.double(round(log(2)/k[1],2)))~d),
+                   bquote(italic(.(example_genes[2]))~":"~t[1/2] == .(as.double(round(log(2)/k[2],2)))~d),
+                   bquote(italic(.(example_genes[3]))~":"~t[1/2] == .(as.double(round(log(2)/k[3],2)))~d))
+
+ggplot[[2]] = ggplot(data=plot_data, aes(x=variable, y=value, shape=gene, colour=gene)) +
+  geom_point() +
+  scale_colour_manual(name = "",values=c("#16502d", "#00aa88", "#55ddff"), label=halftime_label) +
+  scale_shape_manual(name = "",values=c(16,17,18), label=halftime_label) +
+  stat_function(fun=fitting_function, args = list(k[1]),color="#16502d",linetype="solid") +
+  stat_function(fun=fitting_function, args = list(k[2]),color="#00aa88",linetype="dashed") +
+  stat_function(fun=fitting_function, args = list(k[3]),color="#55ddff",linetype="dotted") +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), axis.title=element_text(size=8), 
+        legend.text = element_text(size=8),legend.position = "top") +
+  scale_x_continuous(limits=c(0,max(time)),breaks=c(0,max(time)/2,max(time)), name='time [days]') +
+  scale_y_continuous(limits=c(0,1.2),breaks=c(0,0.5,1), name='norm. B6 expression') +
+  guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
+
+#####plot ratio chrX vs autosomes
+pro_seq_data$Chromosomes = factor(pro_seq_data$Chromosomes, levels = c("autosomes",levels(pro_seq_data$Chromosomes)))
+pro_seq_data$Chromosomes[pro_seq_data$Chromosomes != "chrX"] = "autosomes"
+
+ratios = pro_seq_data[,grep('Ratio',colnames(pro_seq_data))]
+plot_data = data.frame(chromosome = pro_seq_data$Chromosomes, NoDox_BL6_Ratio = rowMeans(ratios[,1:2]), ratios[,3:8], Dox24hr_BL6_Ratio = rowMeans(ratios[,9:10]))
+
+
+colnames(plot_data)[2:9]=gsub("Dox30min[A-z,0-9]*","0.5h",gsub("NoDox([A-z]{1})[A-z,0-9]*","0h",gsub("h([A-z]+)","h \\1",gsub("Dox([0-9]*)hr([A-z]?)_[A-z,0-9]*","\\1h\\2",colnames(plot_data)[2:9],perl = T))))
+require(reshape2)
+plot_data = melt(plot_data)
+
+ggplot[[3]] = ggplot(plot_data,aes(y=value, x=variable, fill=chromosome)) + 
+  stat_boxplot(geom ='errorbar',lwd=0.3) +
+  geom_boxplot(outlier.size=-1,lwd=0.4) +
+  scale_fill_grey(start=0.4, end=0.7, label=c("autosomes","X-chromosome")) +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), axis.title=element_text(size=8, margin = margin(t = 0)), axis.text.x = element_text(size=7,angle = 45,margin = margin(t = 0, b = 0)), 
+        legend.text = element_text(size=8),legend.position = "top", legend.title = element_blank()) +
+  scale_x_discrete(name='timepoints') +
+  scale_y_continuous(limits=c(0,1.2),breaks=c(0,0.5,1), name='fraction B6 reads') +
+  guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
+
+
+
+cairo_pdf(paste(output_dir_plot,'paper_example_fitting.pdf',sep=''),width = 6,height = 3, onefile = TRUE)
+grid.arrange(grobs=ggplot, ncol=3)
+dev.off()
+
+#####plot all ratios
+pro = plot_ratios(pro_seq_data_chrX)
+mrna_und = plot_ratios(mrna_seq_undiff_data_chrX)
+mrna_diff = plot_ratios(mrna_seq_diff_data_chrX)
+
+pro = pro + theme(legend.position="none")
+mrna_und = mrna_und + theme(legend.position="none")
+mrna_diff = mrna_diff + theme(legend.position="bottom")
+legend = get_legend(mrna_diff)
+mrna_diff = mrna_diff + theme(legend.position="none")
+
+cairo_pdf(paste(output_dir_plot,'paper_ratios.pdf',sep=''),width = 7,height = 5, onefile = TRUE)
+grid.arrange(pro,mrna_und,mrna_diff,legend,ncol=1,heights=c(1.3,1.56,1.3,0.5))
+dev.off()
+
+
+
+
+
+
+
+
+
+

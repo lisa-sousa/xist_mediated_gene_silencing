@@ -39,17 +39,26 @@ get_expression_mrna_seq_diff <- function(data){
 }
 
 plot_expression <- function(time,expression,gene){
-  plot(time,expression[[1]],pch=20,col="darkgreen",main=paste(gene,"expression over time"),ylab=paste(gene,"expression [RPKM]"),xlab="time [days]",ylim=c(0,max(sapply(expression, max))))
-  points(time,expression[[2]],pch=20,col="darkblue")
-  lines(time,expression[[1]],col="darkgreen")
-  lines(time,expression[[2]],col="darkblue")
+  library(ggplot2)
+  library(gridExtra)
+  library(cowplot)
+  data_plot = data.frame(allele = rep(c("B6","Cast"),each=length(time)),time=c(time,time),expression = unlist(c(expression[[1]],expression[[2]])))
+  ggplot = ggplot(data_plot, aes(x = time, y = expression, group = allele)) + 
+    geom_line(aes(color=allele)) +
+    geom_point(aes(color=allele)) +
+    scale_color_manual(values=c("#71c837", "#003380")) +
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),legend.title = element_blank(), legend.text = element_text(size=8),
+          axis.text=element_text(size=8), axis.title=element_text(size=8)) + 
+    scale_x_continuous(limits=c(0,max(time)), breaks=c(0,max(time)/2,max(time)), name='time [days]') +
+    scale_y_continuous(name=substitute({italic(gene)} * " expression [RPKM]", list(gene=gene))) 
+  return(ggplot)
 }
 
 ###################################################################################
 #plot allele-specific expression for PRO-seq data
 ###################################################################################
 
-pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression.pdf")
 
 pro_seq_file = "/project/lncrna/Xist/data/silencing_halftimes/raw_data/PROseq.txt"
 pro_seq_data = read.table(pro_seq_file,na.strings=c("NA","nd"),header=T,sep='\t')
@@ -58,21 +67,23 @@ time = c(0,0.5,1,2,4,8,12,24)/24
 ####Xist
 xist_data = pro_seq_data[pro_seq_data$Genes == "Xist",]
 expression = get_expression_pro_seq(xist_data)
-plot_expression(time,expression,"Xist")
-
+xist_pro = plot_expression(time,expression,"Xist")
+xist_pro = xist_pro + theme(legend.position="none")
 
 ####Tsix
 tsix_data = pro_seq_data[pro_seq_data$Genes == "Tsix",]
 expression = get_expression_pro_seq(tsix_data)
-plot_expression(time,expression,"Tsix")
+tsix_pro = plot_expression(time,expression,"Tsix")
+legend = get_legend(tsix_pro)
+tsix_pro = tsix_pro + theme(legend.position="none")
 
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_pro_seq.pdf",height = 2,width = 5)
+grid.arrange(xist_pro, tsix_pro, legend, ncol=3, widths=c(2, 2, 0.5))
 dev.off()
 
 ###################################################################################
 #plot allele-specific expression for undifferentiated mRNA-seq data
 ###################################################################################
-
-pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_undifferentiated.pdf")
 
 mrna_seq_file = "/project/lncrna/Xist/data/silencing_halftimes/raw_data/UndifferenciatedCells.txt"
 mrna_seq_file = read.table(mrna_seq_file,na.strings=c("NA","nd"),header=T,sep='\t')
@@ -83,21 +94,25 @@ mrna_seq_file = mrna_seq_file[,first_replicate]
 ####Xist
 xist_data = mrna_seq_file[mrna_seq_file$Genes == "Xist",]
 expression = get_expression_mrna_seq_undiff(xist_data)
-plot_expression(time,expression,"Xist")
-
+xist_mrna_und = plot_expression(time,expression,"Xist")
+xist_mrna_und = xist_mrna_und + theme(legend.position="none")
 
 ####Tsix
 tsix_data = mrna_seq_file[mrna_seq_file$Genes == "Tsix",]
 expression = get_expression_mrna_seq_undiff(tsix_data)
-plot_expression(time,expression,"Tsix")
+tsix_mrna_und = plot_expression(time,expression,"Tsix")
+legend = get_legend(tsix_mrna_und)
+tsix_mrna_und = tsix_mrna_und + theme(legend.position="none")
 
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_mRNA_undifferentiated.pdf",height = 2,width = 5)
+grid.arrange(xist_mrna_und, tsix_mrna_und, legend, ncol=3, widths=c(2, 2, 0.5))
 dev.off()
 
 ###################################################################################
 #plot allele-specific expression for differentiated mRNA-seq data
 ###################################################################################
 
-pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_differentiated.pdf")
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_mRNA_differentiated.pdf",height = 2,width = 5)
 
 mrna_seq_file = "/project/lncrna/Xist/data/silencing_halftimes/raw_data/DifferenciatedCells.txt"
 mrna_seq_file = read.table(mrna_seq_file,na.strings=c("NA","nd"),header=T,sep='\t')
@@ -106,14 +121,34 @@ time = c(0,8,16,24,48)/24
 ####Xist
 xist_data = mrna_seq_file[mrna_seq_file$Genes == "Xist",]
 expression = get_expression_mrna_seq_diff(xist_data)
-plot_expression(time,expression,"Xist")
-
+xist_mrna_diff = plot_expression(time,expression,"Xist")
+xist_mrna_diff = xist_mrna_diff + theme(legend.position="none")
 
 ####Tsix
 tsix_data = mrna_seq_file[mrna_seq_file$Genes == "Tsix",]
 expression = get_expression_mrna_seq_diff(tsix_data)
-plot_expression(time,expression,"Tsix")
+tsix_mrna_diff = plot_expression(time,expression,"Tsix")
+legend = get_legend(tsix_mrna_diff)
+tsix_mrna_diff = tsix_mrna_diff + theme(legend.position="none")
 
+grid.arrange(xist_mrna_diff, tsix_mrna_diff, legend, ncol=3, widths=c(2, 2, 0.5))
 dev.off()
 
 
+###################################################################################
+####plots for paper
+###################################################################################
+
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_paper.pdf",height = 7,width = 4.5)
+
+xist_pro = xist_pro + theme(legend.position = c(0.5,0.3))
+grid.arrange(arrangeGrob(xist_pro, tsix_pro, top="undifferentiated PRO-seq",ncol=2), 
+             arrangeGrob(xist_mrna_diff, xist_mrna_und, top="undifferentiated mRNA-seq",ncol=2), 
+             arrangeGrob(tsix_mrna_und, tsix_mrna_diff, top = "differentiated mRNA-seq",ncol=2), ncol=1, widths=c(4))
+
+dev.off()
+
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_allelic_expression_pro_seq.pdf",height = 3,width = 2)
+xist_pro = xist_pro + theme(legend.position = "top") + guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
+xist_pro
+dev.off()

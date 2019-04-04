@@ -107,7 +107,7 @@ plot_ratios <- function(data){
   
   # Create the heatmap
   ggplot = ggplot(matrix, aes(Var2, Var1, fill = value)) +
-    geom_tile(colour="white", size = 0.01) +
+    geom_tile() +
     scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5, limit = c(0,1), 
                          space = "Lab",breaks = c(0,0.5,1),name="fraction of reads\nexpressed from \nB6 allele") + # Change gradient color
     theme_minimal(base_family = "Source Sans Pro",base_size=8) +

@@ -4,6 +4,8 @@
 
 library(Cairo)
 library(ggplot2)
+library(cowplot)
+library(gridExtra)
 
 ###################################################################################
 #load data
@@ -17,25 +19,95 @@ silenced = halftimes[halftimes < 0.9]
 late = halftimes[halftimes > 0.9 & halftimes < 1.3]
 not_silenced = halftimes[halftimes > 1.6]
 
-data_plot = data.frame(halftime = early, silencing_class = rep("early",length(early)))
-data_plot = rbind(data_plot, data.frame(halftime = late, silencing_class = rep("late",length(late))))
-data_plot = rbind(data_plot, data.frame(halftime = silenced, silencing_class = rep("silenced",length(silenced))))
-data_plot = rbind(data_plot, data.frame(halftime = not_silenced, silencing_class = rep("not_silenced",length(not_silenced))))
+table_pro_seq = data.frame(halftime = early, silencing_class = rep("early",length(early)), model = rep("silencing dynamics model", length(early)))
+table_pro_seq = rbind(table_pro_seq, data.frame(halftime = late, silencing_class = rep("late",length(late)), model = rep("silencing dynamics model", length(late))))
+table_pro_seq = rbind(table_pro_seq, data.frame(halftime = silenced, silencing_class = rep("silenced",length(silenced)), model = rep("XCI/escape model", length(silenced))))
+table_pro_seq = rbind(table_pro_seq, data.frame(halftime = not_silenced, silencing_class = rep("not silenced",length(not_silenced)), model = rep("XCI/escape model", length(not_silenced))))
 
 ###################################################################################
 #boxplot of different silncing classes
 ###################################################################################
 
-CairoPDF(file = "/project/lncrna/Xist/plots/additional_analysis/boxplots_silencing_classes.pdf", width = 15, height = 15)
-par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))
 
-feature = 'half-time'
-
-gg_box = ggplot(data_plot, aes(x=silencing_class,y=halftime)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + ggtitle(feature) + theme_bw() + 
-  theme(axis.text.x=element_text(hjust = 0.5,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-        plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-  scale_x_discrete(name = "silencing class") + scale_y_continuous(name = "half-time")
-print(gg_box)
-
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_boxplots_silencing_classes.pdf",width = 2,height = 3, onefile = TRUE)
+ggplot = ggplot(table_pro_seq, aes(x=silencing_class,y=halftime, fill=model)) + 
+  geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=-1,lwd=0.4) + 
+  ggtitle("Silencing classes based \non PRO-seq") + 
+  scale_fill_manual("Model",values=c("#2c5aa0", "#a02c2c")) +
+  scale_x_discrete(name = "silencing class",labels=c("early","late","silenced","not silenced")) + 
+  scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=7, angle = 45, hjust=1, margin = margin(t=0,b=0)), axis.text.y = element_text(size=8), 
+        axis.title=element_text(size=8, margin = margin(t=0)),plot.title = element_text(size=8), legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "bottom") +
+  guides(fill=guide_legend(nrow=2), col=guide_legend(nrow=2))
+legend = get_legend(ggplot)
+ggplot = ggplot + theme(legend.position="none")
+grid.arrange(ggplot,legend,ncol=1,heights=c(2.5,0.5))
 dev.off()
+
+
+
+###################################################################################
+#plots paper 2e-f)
+###################################################################################
+
+####load pro-seq data
+table_halftimes = read.table("/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed")
+halftimes = table_halftimes$V5
+
+early = halftimes[halftimes < 0.5]
+silenced = halftimes[halftimes < 0.9]
+late = halftimes[halftimes > 0.9 & halftimes < 1.3]
+not_silenced = halftimes[halftimes > 1.6]
+
+table_pro_seq = data.frame(halftime = early, silencing_class = rep("early",length(early)), model = rep("silencing dynamics model", length(early)))
+table_pro_seq = rbind(table_pro_seq, data.frame(halftime = late, silencing_class = rep("late",length(late)), model = rep("silencing dynamics model", length(late))))
+table_pro_seq = rbind(table_pro_seq, data.frame(halftime = silenced, silencing_class = rep("silenced",length(silenced)), model = rep("XCI/escape model", length(silenced))))
+table_pro_seq = rbind(table_pro_seq, data.frame(halftime = not_silenced, silencing_class = rep("not silenced",length(not_silenced)), model = rep("XCI/escape model", length(not_silenced))))
+
+
+####load marks data
+load('/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData')
+table_halftimes = data.frame(gene = rownames(data_set), halftime = halftime)
+
+table_marks_paper = read.table(file = '/project/lncrna/Xist/data/annotation_files/escapees/metadata/2015_marks_gene_classes.txt',sep='\t',header = F)
+colnames(table_marks_paper) = c('gene','silencing_class')
+
+table_marks = merge(table_halftimes,table_marks_paper,by='gene')[,2:3]
+levels(table_marks$silencing_class) = c("early","escapee","interm.","late")
+table_marks$silencing_class = factor(table_marks$silencing_class,levels = c('early','interm.','late','escapee'),ordered = TRUE)
+table_marks$model = "none"
+table_marks$source = "Silencing classes in differentiating mESCs"
+
+
+####load borenzstein
+load('/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData')
+table_halftimes = data.frame(gene = rownames(data_set), halftime = halftime)
+
+table_NSMB_paper = read.table(file = '/project/lncrna/Xist/data/annotation_files/imprinted_xci_silencing_rates/consistent_genes_categories.txt',sep='\t',header = F)
+colnames(table_NSMB_paper) = c('gene','silencing_class')
+
+table_boren = merge(table_halftimes,table_NSMB_paper,by='gene')
+table_boren = table_boren[table_boren$silencing_class != "Bias",2:3]
+levels(table_boren$silencing_class) = c("Bias","early","escapee","interm.","late")
+table_boren$silencing_class = factor(table_boren$silencing_class,levels = c('early','interm.','late','escapee'),ordered = TRUE)
+table_boren$model = "none"
+table_boren$source = "Silencing classes in pre-implantation embryos"
+
+####boxplots
+table_pro_seq$source = "Silencing classes based on PRO-seq"
+table = rbind(table_marks, table_boren, table_pro_seq)
+table$source = factor(table$source, levels = c("Silencing classes in differentiating mESCs","Silencing classes in pre-implantation embryos","Silencing classes based on PRO-seq"))
+
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_boxplots.pdf",width = 4,height = 3.5, onefile = TRUE)
+ggplot(table, aes(x=silencing_class,y=halftime, fill=model)) +
+  geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+  facet_grid(. ~ source, labeller = label_wrap_gen(width = 20, multi_line = TRUE),scales = "free_x") +
+  scale_fill_manual("Model",values=c("#2c5aa0","white", "#a02c2c")) +
+  scale_x_discrete(name = "silencing class") + 
+  scale_y_continuous(breaks=c(0,1,1.6,2,3,3.5), label=c("0","1","1.6","2","3",">3.5"), name='half-time [days]') +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=7, angle = 45, hjust=1, margin = margin(t=0,b=0)), axis.text.y = element_text(size=8), 
+        axis.title=element_text(size=8, margin = margin(t=0)),strip.text = element_text(size=8), legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "bottom") +
+  guides(fill=guide_legend(nrow=2), col=guide_legend(nrow=2))
+dev.off() 

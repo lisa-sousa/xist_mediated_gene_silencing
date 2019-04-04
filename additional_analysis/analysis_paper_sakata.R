@@ -62,15 +62,28 @@ lines(sort(table_halftimes_not_silenced$halftime), (1:m)/m, type = 's',col='dark
 legend('bottomright',legend = c('CAGdelta5 silenced genes','CAGdelta5 not silenced genes'), col = c('darkorange','darkred'),pch='_')
 
 
-###barplot of into which clusters (silenced vs not silenced model) the CAGdelta5 silenced genes fall
-load(clustering_matrix)
-data_set_plot$cluster = as.numeric(data_set_plot$cluster)
+####plot for paper
+table = data.frame(halftime = c(sort(table_halftimes_silenced$halftime),sort(table_halftimes_not_silenced$halftime)),
+                   class = c(rep("repeatA independent genes",n),rep("repeatA dependent genes",m)))
+
+cairo_pdf(paste(output_dir,'paper_analysis_sakata.pdf',sep=''),width = 2,height = 3, onefile = TRUE)
+ggplot(table, aes(halftime, colour = class)) + 
+  stat_ecdf() + 
+  scale_x_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
+  scale_y_continuous(breaks=c(0,0.5,1), name='Empirical Cumulative Distribution') +
+  scale_color_grey(start=0.4,end=0.8) +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
+        axis.title=element_text(size=8),legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "top") +
+  guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
+dev.off()
 
 ###################################################################################
 #calculate fration of repeat A dependent and independent genes per cluster
 ###################################################################################
 
 #select genes that are silenced in CAGdelta5 mutant
+#data_set_plot$cluster = as.numeric(data_set_plot$cluster)
 matrix_CAGdelta5_silenced = data_set_plot[rownames(data_set_plot) %in% genes_CAGdetla5_silenced,]
 cluster_silenced = matrix_CAGdelta5_silenced$cluster
 

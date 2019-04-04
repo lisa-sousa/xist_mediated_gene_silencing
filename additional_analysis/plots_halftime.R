@@ -59,7 +59,7 @@ ggplot(halftimes, aes(x=halftime, color=silencing_class, fill=silencing_class)) 
   guides(fill=guide_legend(nrow=2), col=guide_legend(nrow=2))
 dev.off() 
 
-cairo_pdf(paste(output_dir_plot,'paper_analysis_halftime_genomic_position.pdf',sep=''),width = 3,height = 3, onefile = TRUE)
+cairo_pdf(paste(output_dir_plot,'paper_analysis_halftime_genomic_position.pdf',sep=''),width = 2.5,height = 3, onefile = TRUE)
 #plot halftime vs genomic position
 ggplot(data=halftimes_table,aes(x=TSS,y=halftime)) +
   geom_vline(xintercept = 100678572, colour="grey") + #TSS of Xist on mm9
@@ -69,7 +69,7 @@ ggplot(data=halftimes_table,aes(x=TSS,y=halftime)) +
   theme_minimal(base_family = "Source Sans Pro") + 
   theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(), axis.ticks.x=element_line(color="grey"),axis.text=element_text(size=8), axis.title=element_text(size=8), 
         axis.text.x = element_text(hjust=c(0,0.5,1)),legend.text = element_text(size=8),legend.position = "top") +
-  scale_x_continuous(limits=c(-100,max(halftimes_table$TSS)+200),breaks=c(0,max(halftimes_table$TSS)/2,max(halftimes_table$TSS)),name='genomic position on X-chromosome',
+  scale_x_continuous(limits=c(0,max(halftimes_table$TSS)),breaks=c(0,max(halftimes_table$TSS)/2,max(halftimes_table$TSS)),name='genomic position on X-chromosome',
                      labels = scales::scientific) +
   scale_y_continuous(limits=c(0,3.6),breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
   scale_colour_manual(name='', values=c('gene'='#666666', 'running median'='#2c5aa0', guide='legend')) +

@@ -5,12 +5,13 @@
 library(reshape2)
 library(ggplot2)
 library(gridExtra)
+library(Cairo)
 
 ###################################################################################
 #input directories
 ###################################################################################
 
-dir_data = "/Users/lisa/Desktop/data/"
+dir_data = "/project/lncrna/Xist/data/"
 dir_enhancers = paste(dir_data,"annotation_files/enhancers/",sep="")
 file_HiCap_enhancers = "Promoter_Enhancer_Interactions.txt"
 file_output = "gene_enhancers.bed"
@@ -41,7 +42,7 @@ write.table(enhancer_bed[1:6],paste(dir_enhancers,file_output,sep=""),col.names 
 #load enhancer matrix and create different enhancer sets (all, strongest, closest) 
 ###################################################################################
 
-output_dir = "/Users/lisa/work_stuff/projects/xist_epigenetics/computing/plots/additional_analysis/"
+output_dir = "/project/lncrna/Xist/plots/additional_analysis/"
 file_halftimes = paste(dir_data,"silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt",sep="")
 file_feature_matrix = paste(dir_data,"modelling/feature_matrix/promoter_matrix_normRAdjusted_enhancer.RData",sep="")
 
@@ -123,28 +124,22 @@ plot_binary_feature <- function(feature,column_all,column_strongest,column_close
   #wilcox_close = p.adjust(get_wilcox_p_value(wilcox_close), method = "BH", n=n)
   
   data_set_plot = rbind(column_all,column_strongest,column_close)[,c(4,1,3)]
-  colnames(data_set_plot) = c("enhancer_set","overlap","value")
-  data_set_plot$overlap = as.numeric(data_set_plot$overlap)-1
-  data_set_plot$overlap[data_set_plot$overlap==0] = "no"
-  data_set_plot$overlap[data_set_plot$overlap==1] = "yes"
-  data_set_plot$overlap = as.factor(data_set_plot$overlap)
+  colnames(data_set_plot) = c("enhancer_set","interaction","value")
+  data_set_plot$interaction = as.numeric(data_set_plot$interaction)-1
+  data_set_plot$interaction[data_set_plot$interaction==0] = "no"
+  data_set_plot$interaction[data_set_plot$interaction==1] = "yes"
+  data_set_plot$interaction = factor(data_set_plot$interaction,levels = c("yes","no"),ordered = T)
   
-  title_box_plot = paste(feature,
-                         "\np-value for all: ",signif(wilcox_all,3),
-                         "\np-value for strongest:",signif(wilcox_strongest,3),
-                         "\np-value for closest:",signif(wilcox_close,3))
-  
-  ggbox = ggplot(data_set_plot, aes(x = enhancer_set, y = value, fill = overlap)) + geom_boxplot(alpha=0.7,notch = F) +
-    scale_y_continuous(name = "half-time[days]") + scale_x_discrete(name = "enhancer set") + ggtitle(title_box_plot) +
-    theme_bw() + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0.5),
-                       axis.title = element_text(size=15, face="bold"),
-                       axis.text.x = element_text(size=15, angle = 60, hjust = 1),
-                       axis.text.y = element_text(size=15),
-                       legend.text=element_text(size=15),
-                       legend.title = element_text(size=15),
-                       axis.line = element_line(colour = "black"),
-                       plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
-    scale_fill_brewer(palette = "Greys")
+  ggbox = ggplot(data_set_plot, aes(x = enhancer_set, y = value, fill = interaction)) + 
+    geom_boxplot(alpha=0.7,notch = F,outlier.size=0.2,lwd=0.4) +
+    labs(fill="interaction",title=feature, subtitle= paste("p-value all: ",signif(wilcox_all,2),"\np-value strongest:",signif(wilcox_strongest,2),"\np-value closest:",signif(wilcox_close,2))) +
+    scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') + 
+    scale_x_discrete(name = "enhancer set") + 
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), 
+          axis.text.y = element_text(size=8), axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle =  element_text(size=8), 
+          legend.title = element_text(size=8), legend.text = element_text(size=8)) +
+    scale_fill_grey()
   return(ggbox)
 }
 
@@ -164,25 +159,19 @@ plot_continuous_feature <- function(feature,column_all,column_strongest,column_c
   data_set_plot = rbind(column_all,column_strongest,column_close)[,c(4,2,1)]
   colnames(data_set_plot) = c("enhancer_set","silencing_class","value")
   data_set_plot$silencing_class[data_set_plot$silencing_class==0] = "silenced"
-  data_set_plot$silencing_class[data_set_plot$silencing_class==1] = "xnot silenced"
-  data_set_plot$silencing_class = as.factor(data_set_plot$silencing_class)
+  data_set_plot$silencing_class[data_set_plot$silencing_class==1] = "not silenced"
+  data_set_plot$silencing_class = factor(data_set_plot$silencing_class, levels = c("silenced", "not silenced", ordered=T))
   
-  title_box_plot = paste(feature,
-                         "\np-value for all: ",signif(wilcox_all,3),
-                         "\np-value for strongest:",signif(wilcox_strongest,3),
-                         "\np-value for closest:",signif(wilcox_close,3))
-  
-  ggbox = ggplot(data_set_plot, aes(x = enhancer_set, y = value, fill = silencing_class)) + geom_boxplot(alpha=0.7,notch = F) +
-    scale_y_continuous(name = "feature") + scale_x_discrete(name = "enhancer set") + ggtitle(title_box_plot) +
-    theme_bw() + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0.5),
-                       axis.title = element_text(size=15, face="bold"),
-                       axis.text.x = element_text(size=15, angle = 60, hjust = 1),
-                       axis.text.y = element_text(size=15),
-                       legend.text = element_text(size=15),
-                       legend.title = element_text(size=15),
-                       axis.line = element_line(colour = "black"),
-                       plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
-    scale_fill_brewer(palette = "Greys")
+  ggbox = ggplot(data_set_plot, aes(x = enhancer_set, y = value, fill = silencing_class)) + 
+    geom_boxplot(alpha=0.7,notch = F,outlier.size=0.2,lwd=0.4) +
+    labs(fill="silencing class",title=feature, subtitle= paste("p-value all: ",signif(wilcox_all,2),"\np-value strongest:",signif(wilcox_strongest,2),"\np-value closest:",signif(wilcox_close,2))) +
+    scale_y_continuous(name = "feature",labels = scales::scientific) + 
+    scale_x_discrete(name = "enhancer set") + 
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), 
+          axis.text.y = element_text(size=8), axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle =  element_text(size=8),
+          legend.title = element_text(size=8), legend.text = element_text(size=8)) +
+    scale_fill_grey() 
   return(ggbox)
 }
 
@@ -191,10 +180,9 @@ plot_continuous_feature <- function(feature,column_all,column_strongest,column_c
 #generate plots for features at enhancer 
 ###################################################################################
 
-pdf(paste(output_dir,"enhancer_boxplots.pdf",sep=""),height = 20, width = 20)
+cairo_pdf(paste(output_dir,"analysis_enhancer.pdf",sep=""),height = 4, width = 4,onefile = T)
 
 boxplots = list()
-
 for(i in 1:(ncol(data_set_all)-2)){
   feature = colnames(data_set_all)[i]
   column_all = cbind.data.frame(feature=data_set_all[,i],target=data_set_all$target, halftime=data_set_all$halftime, enhancer_set = factor("all"))
@@ -220,9 +208,12 @@ for(i in 1:(ncol(data_set_all)-2)){
 print(boxplots)
 dev.off()
 
+###################################################################################
+#plots for paper
+###################################################################################
 
 ##plots boxplots of specific features
-pdf(paste(output_dir,"enhancer_boxplots.pdf",sep=""),height = 20, width = 20)
+cairo_pdf(paste(output_dir,"paper_figures_enhancer.pdf",sep=""),height = 10, width = 12)
 
 boxplots = list()
 colnumbers = c(5,8,14,28,41,40,43,44,62,64,59,77,60,76,66,68)
@@ -246,6 +237,10 @@ for(j in 1:length(colnumbers)){
     
     #plot_binary_feature(feature,column_all,column_strongest,column_close,n)
   }
+  feature = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
+                 gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
+                 gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
+  
   if(is.factor(column_all$feature)){
     boxplots[[j]] = plot_binary_feature(feature,column_all,column_strongest,column_close,n)
   }else{

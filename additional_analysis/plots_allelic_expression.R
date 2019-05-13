@@ -77,7 +77,7 @@ tsix_pro = plot_expression(time,expression,"Tsix")
 legend = get_legend(tsix_pro)
 tsix_pro = tsix_pro + theme(legend.position="none")
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_pro_seq.pdf",height = 2,width = 5)
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/plots_allelic_expression_pro_seq.pdf",height = 2,width = 5)
 grid.arrange(xist_pro, tsix_pro, legend, ncol=3, widths=c(2, 2, 0.5))
 dev.off()
 
@@ -104,15 +104,13 @@ tsix_mrna_und = plot_expression(time,expression,"Tsix")
 legend = get_legend(tsix_mrna_und)
 tsix_mrna_und = tsix_mrna_und + theme(legend.position="none")
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_mRNA_undifferentiated.pdf",height = 2,width = 5)
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/plots_allelic_expression_mRNA_undifferentiated.pdf",height = 2,width = 5)
 grid.arrange(xist_mrna_und, tsix_mrna_und, legend, ncol=3, widths=c(2, 2, 0.5))
 dev.off()
 
 ###################################################################################
 #plot allele-specific expression for differentiated mRNA-seq data
 ###################################################################################
-
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_mRNA_differentiated.pdf",height = 2,width = 5)
 
 mrna_seq_file = "/project/lncrna/Xist/data/silencing_halftimes/raw_data/DifferenciatedCells.txt"
 mrna_seq_file = read.table(mrna_seq_file,na.strings=c("NA","nd"),header=T,sep='\t')
@@ -131,6 +129,7 @@ tsix_mrna_diff = plot_expression(time,expression,"Tsix")
 legend = get_legend(tsix_mrna_diff)
 tsix_mrna_diff = tsix_mrna_diff + theme(legend.position="none")
 
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/plots_allelic_expression_mRNA_differentiated.pdf",height = 2,width = 5)
 grid.arrange(xist_mrna_diff, tsix_mrna_diff, legend, ncol=3, widths=c(2, 2, 0.5))
 dev.off()
 
@@ -139,16 +138,14 @@ dev.off()
 ####plots for paper
 ###################################################################################
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/allelic_expression_paper.pdf",height = 7,width = 4.5)
-
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_figures_allelic_expression.pdf",height = 7,width = 4.5)
 xist_pro = xist_pro + theme(legend.position = c(0.5,0.3))
 grid.arrange(arrangeGrob(xist_pro, tsix_pro, top="undifferentiated PRO-seq",ncol=2), 
-             arrangeGrob(xist_mrna_diff, xist_mrna_und, top="undifferentiated mRNA-seq",ncol=2), 
-             arrangeGrob(tsix_mrna_und, tsix_mrna_diff, top = "differentiated mRNA-seq",ncol=2), ncol=1, widths=c(4))
-
+             arrangeGrob(xist_mrna_und, tsix_mrna_und, top="undifferentiated mRNA-seq",ncol=2), 
+             arrangeGrob(xist_mrna_diff, tsix_mrna_diff, top = "differentiated mRNA-seq",ncol=2), ncol=1, widths=c(4))
 dev.off()
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_allelic_expression_pro_seq.pdf",height = 3,width = 2)
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_figures_allelic_expression_pro_seq.pdf",height = 3,width = 2)
 xist_pro = xist_pro + theme(legend.position = "top") + guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
 xist_pro
 dev.off()

@@ -27,17 +27,19 @@ table = merge(table_mutants,table_cluster,by="gene")
 #plot foldchange vs cluster
 ###################################################################################
 
-CairoPDF(file = "/project/lncrna/Xist/plots/additional_analysis/analysis_paper_mutants.pdf", width = 15, height = 15)
-par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))
+CairoPDF(file = "/project/lncrna/Xist/plots/additional_analysis/analysis_paper_mutants.pdf", width = 4, height = 4)
 
 for(i in 1:3){
   mutant = mutants[i]
   data_plot = data.frame(cluster=table$cluster,mutant=table[,colnames(table)==mutant])
-  gg_box = ggplot(data_plot, aes(x=cluster,y=mutant)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + ggtitle(paste("mutant:",mutant)) + theme_bw() + 
-    theme(axis.text.x=element_text(hjust = 0.5,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-          plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"), 
-          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-    scale_x_discrete(name = "cluster") + scale_y_continuous(name = "log2 foldchange",limits = c(-4, 1))
+  gg_box = ggplot(data_plot, aes(x=cluster,y=mutant)) + 
+    geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) + 
+    ggtitle(paste("mutant:",mutant)) + 
+    scale_x_discrete(name = "cluster") + 
+    scale_y_continuous(name = "log2 foldchange",limits = c(-4, 1)) +
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=7, angle = 45, hjust=1, margin = margin(t=0,b=0)), axis.text.y = element_text(size=8), 
+          axis.title=element_text(size=8, margin = margin(t=0)),plot.title = element_text(size=7)) 
   print(gg_box)
   anova = aov(mutant ~ cluster, data = data_plot)
   print(TukeyHSD(anova))
@@ -54,9 +56,6 @@ table$change_mutant_A = table$A - table$WT
 table$reduced_silencing_mutant_A = 0
 table$reduced_silencing_mutant_A[table$change_mutant_A > thr_mutant_A] = 1
 
-plot(density(table$change_mutant_A),main="difference Mutant A - WT")
-abline(v=thr_mutant_A)
-
 mutant_A_silenced = as.numeric(table$cluster[table$reduced_silencing_mutant_A == 0])
 mutant_A_impaired_silenced = as.numeric(table$cluster[table$reduced_silencing_mutant_A == 1])
 
@@ -68,9 +67,22 @@ par(mfrow=c(1,1),mar=c(5,5,5,5),oma=c(2,2,2,2))
 table_plot = rbind(table(factor(mutant_A_silenced,levels = 1:number_of_clusters))/total_n_of_genes_in_each_cluster,table(factor(mutant_A_impaired_silenced,levels = 1:number_of_clusters))/total_n_of_genes_in_each_cluster)
 table_plot = rbind(table_plot,1 - colSums(table_plot))
 rownames(table_plot) = c("repeat indenpendent genes", "repeat dependent genes", "not covered")
+table_plot = table_plot*100
 
-barplot(table_plot*100,xlab="cluster",col = c('black','lightgrey','white'), ylab="fraction of genes (%)",main = "mutant A gene distribution among cluster", ylim=c(0,100),
-        legend = rownames(table_plot))
+ggplot(aes(x=Var2,y=value,fill=Var1),data=melt(table_plot)) +
+  geom_bar(stat="identity")
+
+cairo_pdf(paste(output_dir,'paper_figures.pdf',sep=''),width = 2,height = 3, onefile = TRUE)
+ggplot(aes(x=Var2,y=value,fill=Var1),data=melt(table*100)) +
+  geom_bar(stat="identity",color="black") +
+  scale_x_continuous(breaks=c(1,2,3), label=c("1", "2", "3"), name='cluster') +
+  scale_y_continuous(breaks=c(0,25,50,75,100), name='fraction of genes (%)') +
+  scale_fill_grey(name="group",start=0.1,end=0.9) +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
+        axis.title=element_text(size=8),legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "bottom") +
+  guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
+dev.off()
 
 ####Fisher test
 cluster1 = 3

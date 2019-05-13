@@ -51,7 +51,7 @@ ggplot(expression_all, aes(x=time_d,y=norm)) +
   geom_point(size=0.6)+
   geom_line(data=fit,aes(y=fitted_data)) +
   facet_wrap(.~gene,labeller = label_wrap_gen(width = 20, multi_line = TRUE),nrow=2) +
-  geom_text(data=halftime_label,aes(x,y,label=label),parse=T,size=2.5,hjust=0) +
+  geom_text(data=halftime_label,aes(x,y,label=label),parse=T,size=2.5,hjust=0, family = "Source Sans Pro") +
   theme_minimal(base_family = "Source Sans Pro") + 
   theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=6), axis.title=element_text(size=8), 
         strip.text=element_text(size=8,hjust = 0.5,face="italic")) + 
@@ -73,7 +73,7 @@ cairo_pdf(file='/project/lncrna/Xist/plots/silencing_halftimes/paper_figures_pyr
 ggplot(halftime,aes(x=class, y=halftime)) + 
   geom_jitter(position=position_jitter(0.2), size=0.6) + 
   stat_summary(fun.y=mean, fun.ymin=mean, fun.ymax=mean,geom="crossbar", color='grey', width=0.7, size=0.2)+
-  geom_text(aes(x=1.5,y=4.5), label=paste('p=',round(wil$p.value,4),sep=""), size=2.5) +
+  geom_text(aes(x=1.5,y=4.5), label=paste('p=',round(wil$p.value,4),sep=""), size=2.5, family = "Source Sans Pro") +
   geom_segment(aes(x=1,xend=2,y=4,yend=4)) +
   theme_minimal(base_family = "Source Sans Pro") + 
   theme(panel.grid.minor = element_blank(), axis.text=element_text(size=8), axis.title=element_text(size=8)) + 

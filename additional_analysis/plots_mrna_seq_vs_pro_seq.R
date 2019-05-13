@@ -38,18 +38,19 @@ scatterplot_dense_colors <- function(x1, x2, xlab, ylab){
   cols = colorRampPalette(c("grey","black"))(256)
   df$col = cols[df$dens]
   
+  cor = cor.test(x1,x2)
+  
   ## Plot it, reordering rows so that densest points are plotted on top
   ggplot = ggplot(data=df[order(df$dens),]) +
     geom_point(aes(x1,x2,color=dens),size=0.5) +
     scale_color_grey(start=0.7,end=0) + 
     geom_smooth(aes(x1,x2),method = "lm", se = FALSE,color="#ff8080", size=0.5) +
-    scale_x_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
-    scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
+    geom_text(aes(x=0,y=3), label=paste('r=',round(cor$estimate,2),"\np=",signif(cor$p.value,2),sep=""), size=2.5, hjust=0, family = "Source Sans Pro") +
+    scale_x_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name=xlab) +
+    scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name=ylab) +
     theme_minimal(base_family = "Source Sans Pro") + 
     theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
           axis.title=element_text(size=8), legend.position = "none") 
-  #plot(x2~x1, data=df[order(df$dens),], pch=20, col=col, cex=2, xlim = c(0,3.5),ylim = c(0,3.5), ylab = ylab, xlab = xlab)
-  #abline(lm(x2~x1))
   
   return(ggplot)
 }
@@ -59,15 +60,12 @@ scatterplot_dense_colors <- function(x1, x2, xlab, ylab){
 ###################################################################################
 
 
-pro_vs_undiff = scatterplot_dense_colors(pro_mrna_undiff_table$halftime.x,pro_mrna_undiff_table$halftime.y,'halftime pro-seq','halftime mRNA-Seq undiff')
-pro_vs_diff = scatterplot_dense_colors(pro_mrna_diff_table$halftime.x,pro_mrna_diff_table$halftime.y,'halftime pro-seq','halftime mRNA-Seq diff')
-diff_vs_undiff = scatterplot_dense_colors(mrna_undiff_diff_table$halftime.x,mrna_undiff_diff_table$halftime.y,'halftime mRNA-Seq undiff','halftime mRNA-Seq diff')
+pro_vs_undiff = scatterplot_dense_colors(pro_mrna_undiff_table$halftime.x,pro_mrna_undiff_table$halftime.y,"PRO-seq undiff.","mRNA-seq undiff.")
+pro_vs_diff = scatterplot_dense_colors(pro_mrna_diff_table$halftime.x,pro_mrna_diff_table$halftime.y,'PRO-seq undiff.','mRNA-seq diff.')
+diff_vs_undiff = scatterplot_dense_colors(mrna_undiff_diff_table$halftime.x,mrna_undiff_diff_table$halftime.y,'mRNA-seq undiff.','mRNA-seq diff.')
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_mrna_seq_vs_pro_seq.pdf",width = 2,height = 4.3, onefile = TRUE)
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_figures_mrna_seq_vs_pro_seq.pdf",width = 2,height = 4.3, onefile = TRUE)
 grid.arrange(diff_vs_undiff,pro_vs_undiff,pro_vs_diff,ncol=1)
 dev.off()
-
-
-
 
 

@@ -43,31 +43,17 @@ table_halftimes_silenced = table_halftimes[table_halftimes$gene %in% genes_CAGde
 table_halftimes_not_silenced = table_halftimes[table_halftimes$gene %in% genes_CAGdetla5_not_silenced,]
 
 ###################################################################################
-#generate plots
+#cumulative distribution of repeat A dependent vs independent genes
 ###################################################################################
-
-####plot distribution and kumulative distribution of halftime for silenced vs not silenced CAGdelta5 genes
-plot_file = paste(output_dir,"analysis_cag_delta_5.pdf",sep="")
-CairoPDF(file = plot_file, width = 10, height = 10)
-par(mfrow=c(1,1),mar=c(5,5,5,5),oma=c(2,2,2,2))
-
-plot(density(table_halftimes_silenced$halftime),main='Halftime distribution of CAgdelta5 genes',col='darkorange')
-lines(density(table_halftimes_not_silenced$halftime),col='darkred')
-legend('topright',legend = c('CAGdelta5 silenced genes','CAGdelta5 not silenced genes'), col = c('darkorange','darkred'),pch='_')
 
 n = nrow(table_halftimes_silenced)
 m = nrow(table_halftimes_not_silenced)
-plot(sort(table_halftimes_silenced$halftime), (1:n)/n, type = 's', ylim = c(0, 1), xlab = 'halftime',col='darkorange', ylab = '', main = 'Empirical Cumluative Distribution\nCAGdelta5')
-lines(sort(table_halftimes_not_silenced$halftime), (1:m)/m, type = 's',col='darkred')
-legend('bottomright',legend = c('CAGdelta5 silenced genes','CAGdelta5 not silenced genes'), col = c('darkorange','darkred'),pch='_')
+table_plot = data.frame(halftime = c(sort(table_halftimes_silenced$halftime),sort(table_halftimes_not_silenced$halftime)),
+                   class = c(rep("repeatA independent",n),rep("repeatA dependent",m)))
 
-
-####plot for paper
-table = data.frame(halftime = c(sort(table_halftimes_silenced$halftime),sort(table_halftimes_not_silenced$halftime)),
-                   class = c(rep("repeatA independent genes",n),rep("repeatA dependent genes",m)))
-
-cairo_pdf(paste(output_dir,'paper_analysis_sakata.pdf',sep=''),width = 2,height = 3, onefile = TRUE)
-ggplot(table, aes(halftime, colour = class)) + 
+####plot cumulative distribution function
+cairo_pdf(paste(output_dir,'paper_figures_CD_repeatA_sakata.pdf',sep=''),width = 2,height = 3, onefile = TRUE)
+ggplot(table_plot, aes(halftime, colour = class)) + 
   stat_ecdf() + 
   scale_x_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
   scale_y_continuous(breaks=c(0,0.5,1), name='Empirical Cumulative Distribution') +
@@ -79,60 +65,79 @@ ggplot(table, aes(halftime, colour = class)) +
 dev.off()
 
 ###################################################################################
-#calculate fration of repeat A dependent and independent genes per cluster
+#distribution of halftimes and features of repeat A dependened vs independend genes 
 ###################################################################################
 
-#select genes that are silenced in CAGdelta5 mutant
-#data_set_plot$cluster = as.numeric(data_set_plot$cluster)
-matrix_CAGdelta5_silenced = data_set_plot[rownames(data_set_plot) %in% genes_CAGdetla5_silenced,]
-cluster_silenced = matrix_CAGdelta5_silenced$cluster
+#plot distribution of halftimes
+cairo_pdf(paste(output_dir,'analysis_paper_sakata.pdf',sep=''),width = 2.5,height = 3, onefile = TRUE)
+ggplot(table_plot, aes(x=halftime,fill=class)) +
+  geom_density(alpha=.4, colour="black",lwd=0.3) + 
+  scale_fill_grey(start = 0.1,end=0.8) +
+  scale_x_continuous(limits=c(-0.5,4),breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
+  scale_y_continuous(name='# of genes') +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=6), axis.title=element_text(size=8), plot.title = element_text(size=8),
+        legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "bottom") +
+  guides(fill=guide_legend(nrow=2), col=guide_legend(nrow=2))
 
-matrix_CAGdelta5_not_silenced = data_set_plot[rownames(data_set_plot) %in% genes_CAGdetla5_not_silenced,]
-cluster_not_silenced = matrix_CAGdelta5_not_silenced$cluster
-
-total_n_of_genes_in_each_cluster = table(data_set_plot$cluster)
-
-par(mfrow=c(1,1),mar=c(5,5,5,5),oma=c(2,2,2,2))
-
-table = rbind(table(factor(cluster_silenced,levels = 1:max(data_set_plot$cluster)))/total_n_of_genes_in_each_cluster,table(factor(cluster_not_silenced,levels = 1:max(data_set_plot$cluster)))/total_n_of_genes_in_each_cluster)
-table = rbind(table,1 - colSums(table))
-rownames(table) = c("repA indenpendent genes", "repA dependent genes & escapees", "not covered")
-
-barplot(table*100,xlab="cluster",col = c('black','lightgrey','white'), ylab="fraction of genes (%)",main = "CAGdelta5 genes distribution among cluster", ylim=c(0,100),
-        legend = rownames(table))
-
-
-###plot boxplots of silenced vs not silenced CAGdelta5 genes for each feature in our model
+###plot boxplots of features
 matrix_CAGdelta5_silenced = data_set[rownames(data_set) %in% genes_CAGdetla5_silenced,]
 matrix_not_CAGdelta5_silenced = data_set[rownames(data_set) %in% genes_CAGdetla5_not_silenced,]
-
 n = nrow(matrix_CAGdelta5_silenced)
 m = nrow(matrix_not_CAGdelta5_silenced)
-
-par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))
 
 for(i in 1:ncol(matrix_CAGdelta5_silenced)){
   feature = colnames(matrix_CAGdelta5_silenced)[i]
   if(!is.factor(matrix_CAGdelta5_silenced[,i])){
-    p_value = wilcox.test(matrix_CAGdelta5_silenced[,i],matrix_not_CAGdelta5_silenced[,i])$p.value
-  }else{p_value = NA}
-  print(feature)
-  data_plot = data.frame(genes = c(rep("CAGdelta5_sil",n),rep("CAGdelta5_not_sil",m)), feature = c(matrix_CAGdelta5_silenced[,i],matrix_not_CAGdelta5_silenced[,i]))
-  
-  gg_box = ggplot(data_plot, aes(x=genes,y=feature)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) + 
-    ggtitle(paste(feature,"P<",round(p_value,4))) + theme_bw() + 
-    theme(axis.text.x=element_text(angle = 90,hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-          plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-    scale_x_discrete(name = "genes") + scale_y_continuous(name = "signal")
-  print(gg_box)
+    wilcox = wilcox.test(matrix_CAGdelta5_silenced[,i],matrix_not_CAGdelta5_silenced[,i])$p.value
+    feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
+                     gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
+                     gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
+    data_plot = data.frame(repeatA = c(rep("independent",n),rep("dependent",m)), feature = c(matrix_CAGdelta5_silenced[,i],matrix_not_CAGdelta5_silenced[,i]))
+    gg_box = ggplot(data_plot, aes(x=repeatA,y=feature)) + 
+      geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+      labs(title=feature_title, subtitle= paste("wilcox test:",signif(wilcox,2))) +
+      scale_y_continuous(name = "signal",labels = scales::scientific) +
+      theme_minimal(base_family = "Source Sans Pro") + 
+      theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), axis.text.y = element_text(size=8), 
+            axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle = element_text(size=8)) 
+    print(gg_box)
+  }
 }
 
 dev.off()
 
+###################################################################################
+#calculate fration of repeat A dependend and independend genes per cluster
+###################################################################################
+
+#select genes that are silenced or not silenced in CAGdelta5 mutant
+load(clustering_matrix)
+data_set_plot$cluster = as.numeric(data_set_plot$cluster)
+cluster_silenced = data_set_plot$cluster[rownames(data_set_plot) %in% genes_CAGdetla5_silenced]
+cluster_not_silenced = data_set_plot$cluster[rownames(data_set_plot) %in% genes_CAGdetla5_not_silenced]
+total_n_of_genes_in_each_cluster = table(data_set_plot$cluster)
+
+table = rbind(table(factor(cluster_not_silenced,levels = 1:max(data_set_plot$cluster)))/total_n_of_genes_in_each_cluster,
+              table(factor(cluster_silenced,levels = 1:max(data_set_plot$cluster)))/total_n_of_genes_in_each_cluster)
+table = rbind(1 - colSums(table),table)
+rownames(table) = c("not covered", "repeat A dependent genes", "repeat A indenpendent genes")
+
+cairo_pdf(paste(output_dir,'paper_figures_cluster_repeatA_sakata.pdf',sep=''),width = 2,height = 3, onefile = TRUE)
+ggplot(aes(x=Var2,y=value,fill=Var1),data=melt(table*100)) +
+  geom_bar(stat="identity",color="black") +
+  scale_x_continuous(breaks=c(1,2,3), label=c("1", "2", "3"), name='cluster') +
+  scale_y_continuous(breaks=c(0,25,50,75,100), name='fraction of genes (%)') +
+  scale_fill_grey(name="group",start=0.1,end=0.9) +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
+        axis.title=element_text(size=8),legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "bottom") +
+  guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
+dev.off()
+
 ####Fisher test
-cluster1 = 1
-cluster2 = 3
+cluster1 = 2
+cluster2 = 1
 #repeat A dependent
 dependent = table(cluster_not_silenced)
 #repeat independent + not covered

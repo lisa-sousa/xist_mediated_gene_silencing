@@ -230,7 +230,7 @@ L = width(sequences)
 CpG_content_table = data.frame(gene_name = halftimes_table$gene_name, CpG_content = (frequencies$CpG/L) / (((frequencies$G+frequencies$C)/(2*L))^2)) #normalization of CpG content taken from: http://nar.oxfordjournals.org/content/37/19/6305.full.pdf+html
 
 
-##########distance (closest) to LINE and LINE density in 750kb around each gene
+##########distance (closest) to LINE and LINE density in 700kb around each gene
 LINEs_file = '/project/lncrna/Xist/data/annotation_files/LINEs/LINEs_mm9.bed'
 LINEs_table = read.table(LINEs_file,sep='\t')
 colnames(LINEs_table) = c("chr","start","end","name","score","strand","dispStart","dispEnd","col")
@@ -240,7 +240,7 @@ tmp_LINEs_file = paste(tmp_dir,'/tmp_LINEs_file.bed',sep='')
 export.bed(LINEs_table,tmp_LINEs_file,format='bed')
 
 tmp_LINE_density_file = paste(tmp_dir,'/tmp_gene_density.txt',sep='')
-cmd = paste(bedTools,'windowBed -a ',tmp_gene_regions_file,' -b ',tmp_LINEs_file,' -w 375000 -c > ',tmp_LINE_density_file,sep='') #-w 	Base pairs added upstream and downstream of each entry in A when searching for overlaps in B. Default is 1000 bp.
+cmd = paste(bedTools,'windowBed -a ',tmp_gene_regions_file,' -b ',tmp_LINEs_file,' -w 350000 -c > ',tmp_LINE_density_file,sep='') #-w 	Base pairs added upstream and downstream of each entry in A when searching for overlaps in B. Default is 1000 bp.
 system(cmd)
 LINE_density_table = read.table(tmp_LINE_density_file,header=F,sep='\t')[,c(4,7)]
 colnames(LINE_density_table) = c('gene_name','LINE_density')
@@ -366,24 +366,3 @@ halftime = halftime
 save(data_set,halftime,file = paste(output_dir,region_name,'_matrix.RData',sep=''))
 
 
-#standardizing
-data_set = matrix_table
-halftime = halftime
-for(j in 1:(ncol(data_set))){
-  if(!is.factor(data_set[,j])){
-    data_set[,j] = (data_set[,j] - mean(data_set[,j])) / sd(data_set[,j])
-  }
-}
-save(data_set,halftime,file = paste(output_dir,region_name,'_matrix_standardized.RData',sep=''))
-
-
-#log transformation
-data_set = matrix_table
-halftime = halftime
-for(j in 1:(ncol(data_set))){ 
-  if(!is.factor(data_set[,j])){
-    data_set[,j] = log(data_set[,j]+1)
-  }
-}
-
-save(data_set,halftime,file = paste(output_dir,region_name,'_matrix_log_transformed.RData',sep=''))

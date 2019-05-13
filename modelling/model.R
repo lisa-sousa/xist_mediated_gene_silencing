@@ -15,7 +15,9 @@ library(doParallel)
 library(cluster)
 library(fpc)
 library(corrplot)
-source("/project/lncrna/Xist/scripts/modelling/model_functions.R")
+library(scales)
+library(gridExtra)
+source("/project/lncrna/Xist/xist_mediated_gene_silencing/modelling/model_functions.R")
 
 ########################################
 #directories and files
@@ -41,11 +43,15 @@ file_results = file(paste(output_directory_data,'log_results.txt',sep=''), open 
 thr_silencing_lower_seq = c(0.5,0.6,0.7)
 thr_silencing_middle_seq = c(0.7,0.8,0.9,1)
 thr_silencing_upper_seq = c(1,1.1,1.2,1.3,1.4)
+class0_label = "early silenced genes"
+class1_label = "late silenced genes"
 
 #threshold combination for "XCI/escape" model
 thr_silencing_lower_seq = c(0.9,1.0,1.1,1.2,1.3,1.4)
 thr_silencing_middle_seq = "-"
 thr_silencing_upper_seq = c(1.4,1.6,1.7,1.8,1.9,2.0)
+class0_label = "silenced genes"
+class1_label = "not silenced genes"
 
 ncores = 20 # number of cores for parallelization
 test_set_min_size = 10 # minimum number of genes in OOB set
@@ -70,7 +76,6 @@ registerDoParallel(my_cluster)
 ########################################
 #run pipeline on all combination of thresholds
 ########################################
-
 
 for(thr_silencing_lower in thr_silencing_lower_seq){
   for(thr_silencing_middle in thr_silencing_middle_seq){
@@ -113,7 +118,7 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         system(cmd)
         
         #plot boxplots of class 0 vs class 1
-        plot_data_boxpots(output_directory_plots_thr, data)
+        plot_data_boxpots(output_directory_plots_thr, data, class0_label, class1_label)
         
         ########################################
         #train random forest on all features
@@ -143,7 +148,8 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         save(random_forest_model_all_features,file=file_random_forest_model_all_features)
         
         #plot the results
-        plot_feature_importance(output_directory_plots_thr, random_forest_model_all_features)
+        plot_feature_importance(output_directory_plots_thr, random_forest_model_all_features, class0_label, class1_label)
+        plot_feature_importance_sorted(output_directory_plots_thr, random_forest_model_all_features, class0_label, class1_label)
         
         ########################################
         #optain optimal number of top feature, then train random forest model on top features and do predictions
@@ -184,8 +190,8 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
                     '; class 1 error:',round(mean(model_error$class1),2)))
         
         #plot optimization of top features and error rates
-        plot_optimization_top_features(output_directory_plots_thr,top_feature_table)
-        plot_error_rates(output_directory_plots_thr, random_forest_model_all_features, random_forest_model_top_features)
+        plot_optimization_top_features(output_directory_plots_thr,top_feature_table,class0_label, class1_label)
+        plot_error_rates(output_directory_plots_thr, random_forest_model_all_features, random_forest_model_top_features,class0_label, class1_label)
         
         #predictions on new genes
         predictions = create_predictions_list(random_forest_model_top_features[[2]],data_set_predictions,file_gene_annotation,file_SNPs,file_RPKM,idx_RPKM,file_feature_matrix,file_halftimes)

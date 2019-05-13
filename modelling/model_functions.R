@@ -43,9 +43,9 @@ load_data <- function(feature_matrix_file, thr_silencing_lower, thr_silencing_mi
 #Data: Boxplots for classes
 ########################################
 
-plot_data_boxpots <- function(output_directory_plots_thr, data){
+plot_data_boxpots <- function(output_directory_plots_thr, data, class0_label, class1_label){
   
-  CairoPDF(file = paste(output_directory_plots_thr,'data_boxplots.pdf',sep=''), width = 15, height = 15)
+  cairo_pdf(file = paste(output_directory_plots_thr,'data_boxplots.pdf',sep=''), width = 4, height = 4,onefile = T)
   hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_strength_HiC_promoter","mean_interaction_strength_HiC_xist")
 
   data_set = data[[1]]
@@ -58,23 +58,26 @@ plot_data_boxpots <- function(output_directory_plots_thr, data){
     feature = colnames(data_set)[i]
     
     if(is.factor(column)){
-      
       column_target = cbind.data.frame(column,halftime)
       feature0 = column_target[column_target[,1]==0,] # the feature
       feature1 = column_target[column_target[,1]==1,] # the feature
       
       wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
       
-      par(mar=c(15,7,7,7))
-      title_box_plot = paste(feature,"\nwilcox p-value:",signif(wilcox,4))
-      gg_box = ggplot(column_target, aes(x=column,y=halftime)) + geom_boxplot(notch=FALSE,fill = 'lightgrey', colour = 'black',alpha = 0.7,outlier.shape = 16) + ggtitle(title_box_plot) + theme_bw() + 
-        theme(axis.text.x=element_text(hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-              plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-        scale_x_discrete(name = "overlap") + scale_y_continuous(name = "halftime")
+      feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
+                           gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
+                           gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
+      
+      gg_box = ggplot(column_target, aes(x=column,y=halftime)) + 
+        geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+        labs(title=feature_title, subtitle= paste("wilcox test:",signif(wilcox,2))) +
+        scale_x_discrete(name = "overlap",breaks=c(0,1),labels=c("no","yes")) + 
+        scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') + 
+        theme_minimal(base_family = "Source Sans Pro") + 
+        theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), axis.text.y = element_text(size=8), 
+              axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle = element_text(size=8)) 
       print(gg_box)
     }else{
-      
       column_target = cbind.data.frame(column,halftime,target)
       class0 = column_target[column_target$target==0,]
       class1 = column_target[column_target$target==1,]
@@ -84,17 +87,21 @@ plot_data_boxpots <- function(output_directory_plots_thr, data){
 
       wilcox = wilcox.test(class0[,1],class1[,1])$p.value
 
-      par(mar=c(15,7,7,7))
-      title_box_plot = paste(feature,"\npearson cor",signif(pears_corr,4),"with p-value:",signif(pears_pValue,4),"\n wilcox test:",signif(wilcox,4))
-      gg_box = ggplot(column_target, aes(x=target,y=column)) + geom_boxplot(notch=FALSE,fill = 'lightgrey', colour = 'black',alpha = 0.7,outlier.shape = 16) + ggtitle(title_box_plot) + theme_bw() + 
-        theme(axis.text.x=element_text(hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-              plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-        scale_x_discrete(name = "class") + scale_y_continuous(name = "feature") 
+      feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
+                                 gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
+                                                            gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
+      
+      gg_box = ggplot(column_target, aes(x=target,y=column)) + 
+        geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+        labs(title=feature_title, subtitle= paste("pearson cor",signif(pears_corr,2),"with p-value:",signif(pears_pValue,2),"\nwilcox test:",signif(wilcox,2))) +
+        scale_x_discrete(name = "class",breaks=c(0,1),labels=c(class0_label,class1_label)) + 
+        scale_y_continuous(name = "signal",labels = scales::scientific) +
+        theme_minimal(base_family = "Source Sans Pro") + 
+        theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), axis.text.y = element_text(size=8), 
+              axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle = element_text(size=8)) 
       print(gg_box)
     }
     if(feature %in% hic_inteactions){
-      
       column_target = cbind.data.frame(column,halftime)
       column_target$column[column_target$column > 0] = 1
       column_target$column = as.factor(column_target$column)
@@ -104,13 +111,18 @@ plot_data_boxpots <- function(output_directory_plots_thr, data){
       
       wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
       
-      par(mar=c(15,7,7,7))
-      title_box_plot = paste(feature,"\nwilcox p-value:",signif(wilcox,4))
-      gg_box = ggplot(column_target, aes(x=column,y=halftime)) + geom_boxplot(notch=FALSE,fill = 'lightgrey', colour = 'black',alpha = 0.7,outlier.shape = 16) + ggtitle(title_box_plot) + theme_bw() + 
-        theme(axis.text.x=element_text(hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-              plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-        scale_x_discrete(name = "overlap") + scale_y_continuous(name = "halftime")
+      feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
+                           gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
+                           gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
+      
+      gg_box = ggplot(column_target, aes(x=column,y=halftime)) + 
+        geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+        labs(title=feature_title, subtitle= paste("wilcox test:",signif(wilcox,2))) +
+        scale_x_discrete(name = "overlap",breaks=c(0,1),labels=c("no","yes")) + 
+        scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') + 
+        theme_minimal(base_family = "Source Sans Pro") + 
+        theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), axis.text.y = element_text(size=8), 
+              axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle = element_text(size=8)) 
       print(gg_box)
       }
   }
@@ -309,9 +321,9 @@ get_best_rf <- function(data_set,target,ntree,mtry,sampsize,thr_class_error,runs
 ########################################
 
 #bxoplot with average feature importance over x Random Forests
-plot_feature_importance <- function(output_directory_plots_thr, random_forest_model){
+plot_feature_importance <- function(output_directory_plots_thr, random_forest_model, class0_label, class1_label){
   
-  CairoPDF(file = paste(output_directory_plots_thr,'feature_importance.pdf',sep=''), width = 20, height = 20)
+  cairo_pdf(file = paste(output_directory_plots_thr,'feature_importance.pdf',sep=''), width = 10, height = 5,onefile = T)
   
   fill = 'lightgrey'
   line = 'black'
@@ -323,18 +335,19 @@ plot_feature_importance <- function(output_directory_plots_thr, random_forest_mo
   meanImpClass0_plot = meanImpClass0[selected_features0,]
   
   #remove GEO ID from feature name
-  row.names(meanImpClass0_plot) = make.names(gsub('_GSE[0-9]*_-?[0-9]*_-?[0-9]*','',row.names(meanImpClass0_plot),perl=T),unique = T)
-  row.names(meanImpClass0_plot) = make.names(gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',row.names(meanImpClass0_plot),perl=T),unique = T)
-  row.names(meanImpClass0_plot) = make.names(gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',row.names(meanImpClass0_plot),perl=T),unique = T)
+  rownames(meanImpClass0_plot) = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',
+                                      gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',rownames(meanImpClass0_plot),perl=T))))))))
   
   n = nrow(meanImpClass0_plot)
-  gg_box = ggplot(melt(t(meanImpClass0_plot)[,n:1]), aes(x=Var2,y=value)) + geom_boxplot(notch=TRUE,fill = fill, colour = line,alpha = 0.7,outlier.shape = 16) 
-  gg_box = gg_box + ggtitle("feature importance for class 0 genes") + theme_bw() + 
-    theme(axis.text.x=element_text(angle = 60, hjust = 1,size=25),axis.text.y=element_text(size=25),axis.title = element_text(face="bold", size=30),
-          plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm")) + 
-    scale_x_discrete(name = "") + scale_y_continuous(name = "mean decrease in accuracy",limits=c(-5, 30)) + coord_flip()
-  print(gg_box)
-  
+  gg_box0 = ggplot(melt(t(meanImpClass0_plot)[,n:1]), aes(x=Var2,y=value)) + 
+    geom_boxplot(fill="white",colour = "#4d4d4d",alpha = 0.7,outlier.size=0.2,lwd=0.4) +
+    ggtitle(paste("feature importance",class0_label)) +
+    scale_y_continuous(name = "mean decrease in accuracy",limits=c(-5, 30)) +
+    scale_x_discrete(name="") + coord_flip() +
+    theme_minimal(base_family = "Source Sans Pro") +
+    theme(panel.grid.minor = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
+          axis.title=element_text(size=8),plot.title = element_text(size=8,hjust=0.5)) 
+
   
   ####plot feature importance for class 0
   meanImpClass1 = random_forest_model[[3]]
@@ -342,42 +355,87 @@ plot_feature_importance <- function(output_directory_plots_thr, random_forest_mo
   meanImpClass1_plot = meanImpClass1[selected_features1,]
   
   #remove GEO ID from feature name
-  row.names(meanImpClass1_plot) = make.names(gsub('_GSE[0-9]*_-?[0-9]*_-?[0-9]*','',row.names(meanImpClass1_plot),perl=T),unique = T)
-  row.names(meanImpClass1_plot) = make.names(gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',row.names(meanImpClass1_plot),perl=T),unique = T)
-  row.names(meanImpClass1_plot) = make.names(gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',row.names(meanImpClass1_plot),perl=T),unique = T)
+  rownames(meanImpClass1_plot) = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',
+                                      gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',rownames(meanImpClass1_plot),perl=T))))))))
   
   n = nrow(meanImpClass1_plot)
-  gg_box = ggplot(melt(t(meanImpClass1_plot)[,n:1]), aes(x=Var2,y=value)) + geom_boxplot(notch=TRUE,fill = fill, colour = line,alpha = 0.7,outlier.shape = 16) 
-  gg_box = gg_box + ggtitle("feature importance for class 1 genes") + theme_bw() + 
-    theme(axis.text.x=element_text(angle = 60, hjust = 1,size=25),axis.text.y=element_text(size=25),axis.title = element_text(face="bold", size=30),plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm")) + 
-    scale_x_discrete(name = "") + scale_y_continuous(name = "mean decrease in accuracy",limits=c(-5, 30)) + coord_flip()
-  print(gg_box)
+  gg_box1 = ggplot(melt(t(meanImpClass1_plot)[,n:1]), aes(x=Var2,y=value)) + 
+    geom_boxplot(fill="white",colour = "#4d4d4d",alpha = 0.7,outlier.size=0.2,lwd=0.4) +
+    ggtitle(paste("feature importance",class1_label)) +
+    scale_y_continuous(name = "mean decrease in accuracy",limits=c(-5, 30)) +
+    scale_x_discrete(name="") + coord_flip() +
+    theme_minimal(base_family = "Source Sans Pro") +
+    theme(panel.grid.minor = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
+          axis.title=element_text(size=8),plot.title = element_text(size=8,hjust=0.5)) 
+  
+  grid.arrange(gg_box0,gg_box1,ncol=2,widths=c(4,4))
   
   dev.off()
 }
 
+plot_feature_importance_sorted <- function(output_directory_plots_thr, random_forest_model, class0_label, class1_label){
+  
+  cairo_pdf(file = paste(output_directory_plots_thr,'feature_importance_sorted.pdf',sep=''), width = 9, height = 4,onefile = T)
+  
+  meanImpClass0 = data.frame(feature=row.names(random_forest_model_all_features[[2]]),meanImpClass0 = rowMedians(random_forest_model_all_features[[2]]))
+  meanImpClass0$meanImpClass0[meanImpClass0$meanImpClass0 < 0] = 0
+  
+  meanImpClass1 = data.frame(feature=row.names(random_forest_model_all_features[[3]]),meanImpClass1 = rowMedians(random_forest_model_all_features[[3]]))
+  meanImpClass1$meanImpClass1[meanImpClass1$meanImpClass1 < 0] = 0
+  
+  importance = merge(meanImpClass0,meanImpClass1,by="feature")
+  importance$mean = rowMeans(importance[,2:3])
+  importance = importance[order(importance$mean,decreasing = T),]
+  row.names(importance) = importance$feature
+  importance = as.matrix(importance[,2:3])
+  
+  rownames(importance) = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',
+                              gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',rownames(importance),perl=T))))))))
+  colnames(importance) = c(class0_label,class1_label)
+  matrix = melt(t(importance))
+  matrix$Var1 = factor(matrix$Var1,levels = c(class1_label,class0_label),ordered = TRUE)
+  
+  # Create the heatmap
+  breaks=c(min(importance),0.01,0.2,0.3,0.4,0.5,1,2,3,4,5,10,max(importance))
+  mycol = c("white","#E2E2E2","#DBDCE0","#CFD0DA","#BEC1D4","#ABB0CC","#959CC3","#7D87B9","#6371AF","#4359A7","#023FA5","darkblue")
+  
+  
+  ggplot = ggplot(matrix, aes(Var2, Var1, fill = value)) +
+    geom_tile(color="#4d4d4d",size=0.3) +
+    theme_minimal(base_family = "Source Sans Pro") +
+    theme(axis.text.x = element_text(size = 6,angle=45, hjust=1),axis.text.y = element_text(size = 8), legend.position="bottom", 
+          legend.text = element_text(size=7), legend.title = element_text(size=8), axis.title=element_text(size=8),plot.background=element_blank(),panel.border=element_blank()) +
+    coord_fixed(ratio=1.5) + 
+    scale_fill_gradientn(name="Mean Decrease in accuracy",colours=mycol, values=rescale(breaks), guide="colorbar", limits = c(0,max(matrix$value))) +
+    scale_y_discrete(name="",position = "top",expand = c(0, 0)) + 
+    scale_x_discrete(name="",expand = c(0, 0)) 
+  print(ggplot)
+  dev.off()
+}
+
 #plot error rate vs number of selected top features
-plot_optimization_top_features <- function(output_directory_plots_thr,error_table){
+plot_optimization_top_features <- function(output_directory_plots_thr,error_table,class0_label,class1_label){
   
-  CairoPDF(file = paste(output_directory_plots_thr,'optimization_top_features.pdf',sep=''), width = 15, height = 15)
-  par(mfrow=c(1,1),mar=c(10,10,10,10),oma=c(5,5,5,5))
-  colors = brewer.pal(5,'Set2')
+  min = which.min(error_table[,2])
   
-  plot(error_table[,1], error_table[,2], col=colors[1], pch = 18, ylim=c(15,40), cex.lab=2, cex.axis=1.8, cex.main=3, ylab='OOB error', xlab='# of top features', main="optimize number of top features")
-  lines(error_table[,1], error_table[,2], col=colors[1])
-  points(error_table[,1], error_table[,3], col=colors[2], pch = 18)
-  lines(error_table[,1], error_table[,3], col=colors[2])
-  points(error_table[,1], error_table[,4], col=colors[3], pch = 18)
-  lines(error_table[,1], error_table[,4], col=colors[3])
-  abline(v=which.min(error_table[,2]))
-  
+  cairo_pdf(file = paste(output_directory_plots_thr,'optimization_top_features.pdf',sep=''), width = 6, height = 4)
+  ggplot = ggplot(data=melt(error_table[,2:4]), aes(x=Var1, y=value, shape=Var2, colour=Var2)) +
+    geom_point() +
+    geom_line() +
+    scale_color_brewer(name="Error",labels=c("total",class0_label,class1_label)) +
+    scale_shape_ordinal(name="Error",labels=c("total",class0_label,class1_label)) +
+    geom_vline(xintercept = min,color="red") +
+    scale_y_continuous(name = "error rate (%)",limits = c(0,50)) + 
+    scale_x_continuous(name = "number of features",breaks = sort(c(0,5,10,15,20,min))) +
+    theme_minimal(base_family = "Source Sans Pro") +
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8),
+          legend.text = element_text(size=8), legend.title = element_text(size=8), axis.title=element_text(size=8),plot.background=element_blank(),panel.border=element_blank()) 
+  print(ggplot)
   dev.off() 
 }
 
 #plot error rate of full model and top features model
-plot_error_rates <- function(output_directory_plots_thr, random_forest_model_all_features, random_forest_model_top_features){
-  
-  CairoPDF(file = paste(output_directory_plots_thr,'error_rate.pdf',sep=''), width = 10, height = 10)
+plot_error_rates <- function(output_directory_plots_thr, random_forest_model_all_features, random_forest_model_top_features,class0_label,class1_label){
   
   model_error_all = random_forest_model_all_features[[1]]
   model_error_top = random_forest_model_top_features[[1]]
@@ -387,17 +445,19 @@ plot_error_rates <- function(output_directory_plots_thr, random_forest_model_all
   model_error = rbind(model_error_all,model_error_top)
   plot_df = melt(model_error,id.vars = c("feature_set"))
   
-  par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))
   
-  ggbox = ggplot(plot_df, aes(x = variable, y = value, fill = feature_set)) + geom_boxplot(alpha=0.7,notch = T) +
-    scale_y_continuous(name = "error rate (%)", limits=c(0, 50)) + scale_x_discrete(name = "") + ggtitle("Error rate for Random Forest models") +
-    theme_bw() + theme(plot.title = element_text(size = 14, family = "Tahoma", face = "bold",hjust = 0.5),text = element_text(size = 12, family = "Tahoma"),
-                       axis.title = element_text(face="bold"),axis.text.x=element_text(angle = 60, hjust = 1,size=11),plot.margin = unit(c(2,2,2,2), "cm"),
-                       axis.line = element_line(colour = "black")) + 
-    scale_fill_brewer(palette = "Greys")
-  
-  print(ggbox)
-  
+  cairo_pdf(file = paste(output_directory_plots_thr,'error_rate.pdf',sep=''), width = 4, height = 4)
+  gg_box = ggplot(plot_df, aes(x=variable,y=value,fill = feature_set)) + 
+    geom_boxplot(alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+    scale_fill_manual("feature set",values=c("#cccccc", "#87aade"),labels=c("all features","top features")) +
+    
+    scale_y_continuous(name = "error rate (%)",limits = c(0,50)) + 
+    scale_x_discrete(name = "",labels=c("total",class0_label,class1_label)) +
+
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), axis.text.y = element_text(size=8), 
+          axis.title=element_text(size=8),legend.position = c(0.85, 0.9),legend.text = element_text(size=8),legend.title = element_text(size=8)) 
+  print(gg_box)
   dev.off()
 }
 
@@ -483,15 +543,25 @@ proximity_clustering <- function(output_directory_plots_thr,output_directory_dat
   
   for(k in 1:4){ #max number of clusters for plotting: 10
     if(index[k] != 1){
-      pam = pam(distance,k,diss=T)
       boot_pam = clusterboot(dist(distance), B=B, bootmethod =c("boot"),multipleboot = T, clustermethod = pamkCBI, krange = k, seed = 15555, count=F)
-      plot_clustering_stability(output_directory_plots_thr,title,k,boot_pam)
+      
+      #sort clusters by number of class 0/1 genes in cluster
+      sort_cluster = data.frame(cluster = boot_pam$result$partition,prediction = data_set$predictions)
+      class1_genes = data.frame(cluster = 1:k,class1_genes = rep(0,k))
+      for(i in 1:k){class1_genes$class1_genes[i]=sum(sort_cluster$prediction[sort_cluster$cluster==i])}
+      class1_genes = class1_genes[order(class1_genes$class1_genes),]
+      class1_genes$new_cluster = 1:k
+      for(i in 1:k){boot_pam$result$partition[boot_pam$result$partition==i] = class1_genes$new_cluster[class1_genes$cluster==i]+k}
+      boot_pam$result$partition = boot_pam$result$partition-k
+      
+      #cluster stability
+      plot_clustering_stability(output_directory_plots_thr,title,k,boot_pam,class1_genes)
       
       cat(paste("k: ",k), file = file_results, sep = "\n")
       cat(paste("index: ",round(index[k],2)), file = file_results, sep = "\n")
-      cat(paste(paste("cluster",1:k),round(boot_pam$bootmean,4), sep=": "), file = file_results, sep = "\n")
+      cat(paste(paste("cluster",1:k),round(boot_pam$bootmean[class1_genes$cluster],4), sep=": "), file = file_results, sep = "\n")
       
-      data_set_plot = cbind(cluster=pam$clustering,data_set)
+      data_set_plot = cbind(cluster=boot_pam$result$partition,data_set)
       data_set_plot = data_set_plot[order(data_set_plot$cluster,data_set_plot$predictions,data_set_plot$halftime),]
       data_set_plot$cluster = as.factor(data_set_plot$cluster)
       
@@ -542,20 +612,37 @@ proximity_clustering <- function(output_directory_plots_thr,output_directory_dat
 #heatmap with proximities
 plot_proximities <- function(output_directory_plots_thr,title,proximity){
  
-  CairoPDF(file = paste(output_directory_plots_thr,title,'_proximity.pdf',sep=''), width = 10, height = 15)
-  par(mar=c(10,10,4,2),oma=c(2,2,0,0)) 
+  cairo_pdf(file = paste(output_directory_plots_thr,title,'_proximity.pdf',sep=''), width = 10, height = 10)
+  par(mar=c(1,4,1,0),oma=c(0,2,0,0)) 
   
-  corrplot(proximity, order='hclust', hclust.method='ward.D2', col=colorRampPalette(c('blue','white','red'))(200), diag=F, cl.cex=1.3, tl.cex=1.3, tl.col = "black",is.corr = FALSE,
-           bg='white', addgrid.col=NA,main="proximity of genes in random forest leafs")
+  corrplot(proximity, order='hclust', hclust.method='ward.D2', col=colorRampPalette(c('blue','white','red'))(200), diag=F, cl.cex=1, tl.cex=0.3, tl.col = "black",is.corr = FALSE,
+           bg='white', addgrid.col=NA)
   
   dev.off()
 }
 
 #plot with stability of each cluster
-plot_clustering_stability <- function(output_directory_plots_thr,title,k,boot_pam){
+plot_clustering_stability <- function(output_directory_plots_thr,title,k,boot_pam,class1_genes){
 
-  CairoPDF(file = paste(output_directory_plots_thr,title,'_clustering_stability_k',k,'.pdf',sep=''), width = 10, height = 15)
-  plot(boot_pam)
+  cairo_pdf(file = paste(output_directory_plots_thr,title,'_clustering_stability_k',k,'.pdf',sep=''), width = 4, height = k*1.5)
+  
+  boot_pam$bootresult = boot_pam$bootresult[class1_genes$cluster,]
+  boot_pam$bootmean = boot_pam$bootmean[class1_genes$cluster]
+  boot_plot = melt(boot_pam$bootresult)
+  boot_plot$Var1 = paste("cluster", boot_plot$Var1)
+  
+  text <- data.frame(label = paste("JS =",round(boot_pam$bootmean,3)), Var1 = unique(boot_plot$Var1))
+  ggplot = ggplot(boot_plot, aes(x=value)) +
+    geom_histogram(fill = "grey",color="darkgrey",breaks = seq(0,1,0.01),position="identity", alpha=0.6) +
+    facet_grid(Var1 ~ ., labeller = label_wrap_gen(width = 20, multi_line = TRUE)) +
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), axis.title=element_text(size=8),
+          strip.text.y = element_text(size = 8),plot.title = element_text(size=10, hjust = 0.5)) +
+    scale_x_continuous(limits=c(0,1),breaks=c(0,0.5,1), name='Jaccard Similarity') +
+    scale_y_continuous(name='Frequency') +
+    ggtitle("cluster stability") +
+    geom_text(data = text, mapping = aes(x = -Inf, y = Inf, label = label),size=3,hjust=-0.5,vjust=3)
+  print(ggplot)
   dev.off()
   
 }
@@ -563,34 +650,37 @@ plot_clustering_stability <- function(output_directory_plots_thr,title,k,boot_pa
 #boxplots of feature distribution per cluster sorted by anova p-value
 plot_clustering_anova <- function(output_directory_plots_thr,title,k,data_set_plot,data_set_plot_sorted,p_value_table){
 
-  CairoPDF(file = paste(output_directory_plots_thr,title,'_clustering_boxplots_k',k,'.pdf',sep=''), width = 12, height = 12)
-  par(mfrow=c(1,1),mar=c(15,10,10,5),oma=c(5,5,5,5))
-  
+  cairo_pdf(file = paste(output_directory_plots_thr,title,'_clustering_boxplots_k',k,'.pdf',sep=''), width = 4, height = 4, onefile = T)
   cluster = as.factor(data_set_plot$cluster)
   
   for(i in 1:ncol(data_set_plot_sorted)){
     feature = colnames(data_set_plot_sorted)[i]
     data_plot = data.frame(cluster = cluster,feature = data_set_plot_sorted[,i])
     
-    gg_box = ggplot(data_plot, aes(x=cluster,y=feature)) + geom_boxplot(notch=FALSE,fill = 'lightgrey', colour = 'black',alpha = 0.7,outlier.shape = 16) + ggtitle(feature) + theme_bw() + 
-      theme(axis.text.x=element_text(hjust = 1,size=20),axis.text.y=element_text(size=20),axis.title = element_text(face="bold", size=20),
-            plot.title = element_text(hjust = 0.5,size=35,face='bold'),plot.margin = unit(c(3,3,3,3), "cm"),
-            panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
-      scale_x_discrete(name = "cluster") + scale_y_continuous(name = "signal") + 
-      annotate("text", x=c(0.7), y=max(data_plot$feature), label = c(paste("p-value:",signif(p_value_table$p_value[i],3))))
+    feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
+                         gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
+                         gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
+    
+    gg_box = ggplot(data_plot, aes(x=cluster,y=feature)) + 
+      geom_boxplot(colour = "#4d4d4d",fill="lightgrey",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+      labs(title=feature_title, subtitle= paste("p-value:",signif(p_value_table$p_value[i],3))) +
+      scale_x_discrete(name = "cluster") + 
+      scale_y_continuous(name = "signal",labels = scales::scientific) +
+      theme_minimal(base_family = "Source Sans Pro") + 
+      theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, hjust=1), axis.text.y = element_text(size=8), 
+            axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle = element_text(size=8)) 
     print(gg_box)
+    
   }
   dev.off() 
 }
 
 #plot of feature heatmap, features sorted by anova p-value and cluster
 plot_clustering_heatmap <- function(output_directory_plots_thr,k,title,data_set_norm,title_heatmap){
-
-  colnames(data_set_norm) = gsub('_NA*','',colnames(data_set_norm),perl=T)
-  colnames(data_set_norm) = gsub('_GSE[0-9]*_-?[0-9]*_-?[0-9]*','',colnames(data_set_norm),perl=T)
-  colnames(data_set_norm) = gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',colnames(data_set_norm),perl=T)
-  colnames(data_set_norm) = gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',colnames(data_set_norm),perl=T)
   
+  colnames(data_set_norm) = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
+                       gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
+                       gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',colnames(data_set_norm),perl=T))))))))
   
   #z-score transformation of data set
   for(i in 4:(ncol(data_set_norm))){
@@ -606,25 +696,23 @@ plot_clustering_heatmap <- function(output_directory_plots_thr,k,title,data_set_
   
   data_set_norm$target[data_set_norm$target == 0] = -3
   data_set_norm$target[data_set_norm$target == 1] = 3
+  data_set_norm$cluster = as.numeric(data_set_norm$cluster)
   
-  #plot heatmap
-  estWidth <- max(6 * log(nrow(data_set_norm)), 15)
-  estHeight <- max(6 * log(ncol(data_set_norm)), 10)
-  CairoPDF(file = paste(output_directory_plots_thr,title,"_",title_heatmap,'.pdf',sep=''), width = estWidth, height = estHeight)
-  par(mfrow=c(1,1),mar=c(1,1,1,1),oma=c(20,3,3,3))
+  matrix = melt(t(data_set_norm))
+  cairo_pdf(file = paste(output_directory_plots_thr,title,"_",title_heatmap,'.pdf',sep=''), width = 8, height = 8, onefile = T)
+  # Create the heatmap
+  ggplot = ggplot(matrix, aes(Var2, Var1, fill = value)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-3,3)) + # Change gradient color
+    theme_minimal(base_family = "Source Sans Pro",base_size=8) +
+    theme(axis.text.x = element_blank(),axis.text.y = element_text(size = 8),legend.text = element_text(size=8), 
+          legend.title = element_text(size=8), axis.title=element_text(size=8),plot.background=element_blank(),panel.border=element_blank()) +
+    coord_fixed(ratio=4) + 
+    scale_y_discrete(name="feature",limits = rev(levels(matrix$Var1))) +
+    scale_x_discrete(name="gene promoters") 
   
-  mycol = bluered(50)
-  colfunc = colorRampPalette(c("black","lightgrey"))
-  col_pal = colfunc(k)
-  cluster_col = as.character(data_set_norm$cluster)
-  for(i in 1:k){
-    cluster_col[cluster_col == i] = col_pal[i]
-  }
-  
-  heat_matrix = as.matrix(data_set_norm[,2:ncol(data_set_norm)])
-  heatmap.2(heat_matrix,col=mycol,Colv=NA,Rowv=NA,scale='none',cexCol=1.8,main='PAM clustering with proximity measure',trace='none',RowSideColors=cluster_col,dendrogram='none',labRow='')
-  
-  dev.off()  
+  print(ggplot)  
+  dev.off()
 }
 
 

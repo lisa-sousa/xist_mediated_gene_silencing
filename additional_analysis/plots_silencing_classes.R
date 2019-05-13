@@ -29,7 +29,7 @@ table_pro_seq = rbind(table_pro_seq, data.frame(halftime = not_silenced, silenci
 ###################################################################################
 
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_boxplots_silencing_classes.pdf",width = 2,height = 3, onefile = TRUE)
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/plots_silencing_classes.pdf",width = 2,height = 3, onefile = TRUE)
 ggplot = ggplot(table_pro_seq, aes(x=silencing_class,y=halftime, fill=model)) + 
   geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=-1,lwd=0.4) + 
   ggtitle("Silencing classes based \non PRO-seq") + 
@@ -37,7 +37,7 @@ ggplot = ggplot(table_pro_seq, aes(x=silencing_class,y=halftime, fill=model)) +
   scale_x_discrete(name = "silencing class",labels=c("early","late","silenced","not silenced")) + 
   scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
   theme_minimal(base_family = "Source Sans Pro") + 
-  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=7, angle = 45, hjust=1, margin = margin(t=0,b=0)), axis.text.y = element_text(size=8), 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1, margin = margin(t=0,b=0)), axis.text.y = element_text(size=8), 
         axis.title=element_text(size=8, margin = margin(t=0)),plot.title = element_text(size=8), legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "bottom") +
   guides(fill=guide_legend(nrow=2), col=guide_legend(nrow=2))
 legend = get_legend(ggplot)
@@ -77,7 +77,7 @@ table_marks = merge(table_halftimes,table_marks_paper,by='gene')[,2:3]
 levels(table_marks$silencing_class) = c("early","escapee","interm.","late")
 table_marks$silencing_class = factor(table_marks$silencing_class,levels = c('early','interm.','late','escapee'),ordered = TRUE)
 table_marks$model = "none"
-table_marks$source = "Silencing classes in differentiating mESCs"
+table_marks$source = "Differentiating mESCs"
 
 
 ####load borenzstein
@@ -92,22 +92,22 @@ table_boren = table_boren[table_boren$silencing_class != "Bias",2:3]
 levels(table_boren$silencing_class) = c("Bias","early","escapee","interm.","late")
 table_boren$silencing_class = factor(table_boren$silencing_class,levels = c('early','interm.','late','escapee'),ordered = TRUE)
 table_boren$model = "none"
-table_boren$source = "Silencing classes in pre-implantation embryos"
+table_boren$source = "Pre-implantation embryos"
 
 ####boxplots
-table_pro_seq$source = "Silencing classes based on PRO-seq"
+table_pro_seq$source = "PRO-seq in undiff. mESC"
 table = rbind(table_marks, table_boren, table_pro_seq)
-table$source = factor(table$source, levels = c("Silencing classes in differentiating mESCs","Silencing classes in pre-implantation embryos","Silencing classes based on PRO-seq"))
+table$source = factor(table$source, levels = c("Differentiating mESCs","Pre-implantation embryos","PRO-seq in undiff. mESC"))
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_boxplots.pdf",width = 4,height = 3.5, onefile = TRUE)
+cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_figures_silencing_classes.pdf",width = 4,height = 3.5, onefile = TRUE)
 ggplot(table, aes(x=silencing_class,y=halftime, fill=model)) +
   geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
   facet_grid(. ~ source, labeller = label_wrap_gen(width = 20, multi_line = TRUE),scales = "free_x") +
   scale_fill_manual("Model",values=c("#2c5aa0","white", "#a02c2c")) +
   scale_x_discrete(name = "silencing class") + 
-  scale_y_continuous(breaks=c(0,1,1.6,2,3,3.5), label=c("0","1","1.6","2","3",">3.5"), name='half-time [days]') +
+  scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') +
   theme_minimal(base_family = "Source Sans Pro") + 
-  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=7, angle = 45, hjust=1, margin = margin(t=0,b=0)), axis.text.y = element_text(size=8), 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1, margin = margin(t=0,b=0)), axis.text.y = element_text(size=8), 
         axis.title=element_text(size=8, margin = margin(t=0)),strip.text = element_text(size=8), legend.text = element_text(size=8), legend.title = element_text(size=8), legend.position = "bottom") +
   guides(fill=guide_legend(nrow=2), col=guide_legend(nrow=2))
 dev.off() 

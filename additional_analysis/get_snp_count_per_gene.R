@@ -44,7 +44,6 @@ get_attributes <- function(gencode_table, info_gene_name, info_gene_type){
 #get number of SNPs per gene
 ####################################################
 
-
 #create mm10 sequence info
 mm10_chrom_sizes = read.table(file = file_mm10_chrom_sizes, header=F, sep='\t')
 mm10_seq_info = Seqinfo(seqnames = as.character(mm10_chrom_sizes[,1]), seqlengths = mm10_chrom_sizes[,2], isCircular = rep(FALSE,nrow(mm10_chrom_sizes)), genome = 'mm10')

@@ -113,13 +113,43 @@ plot_ratios <- function(data){
   ggplot = ggplot(matrix, aes(Var2, Var1, fill = value)) +
     geom_tile() +
     scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5, limit = c(0,1), 
-                         space = "Lab",breaks = c(0,0.5,1),name="fraction B6 reads") + # Change gradient color
+                         space = "Lab",breaks = c(0,0.5,1),name="fraction of B6 reads") + # Change gradient color
     theme_minimal(base_family = "Source Sans Pro",base_size=8) +
     theme(axis.text.x = element_text(size = 7),axis.text.y = element_text(size = 7), legend.position="bottom", legend.margin = margin(t = 0, unit='cm'), 
-          legend.text = element_text(size=7), legend.title = element_text(size=8), axis.title=element_text(size=8),plot.background=element_blank(),panel.border=element_blank())+
+          legend.text = element_text(size=8), legend.title = element_text(size=8), axis.title=element_text(size=8),plot.background=element_blank(),panel.border=element_blank())+
     coord_fixed(ratio=5) + xlab("genes (sorted by genomic location)") + ylab("time point") + 
     scale_y_discrete(position = "right",expand = c(0, 0)) + scale_x_discrete(breaks = c("Tsix"),labels = expression(italic(Xist)~'locus'),expand = c(0, 0)) +
     geom_vline(aes(xintercept = which(data_sorted$Genes=="Tsix")),size=0.7,alpha=0.6)
+  return(ggplot)
+}
+
+scatterplot_dense_colors <- function(x1, x2, xlab, ylab){
+  
+  df = data.frame(x1,x2)
+  
+  ## Use densCols() output to get density at each point
+  x = densCols(x1,x2, colramp=colorRampPalette(c("black", "white")))
+  df$dens = as.factor(col2rgb(x)[1,] + 1L)
+  
+  ## Map densities to colors
+  cols = colorRampPalette(c("#000099", "#00FEFF", "#45FE4F", "#FCFF00", "#FF9400", "#FF3100"))(256)
+  cols = colorRampPalette(c("grey","black"))(256)
+  df$col = cols[df$dens]
+  
+  cor = cor.test(x1,x2)
+  print(cor)
+  
+  ## Plot it, reordering rows so that densest points are plotted on top
+  ggplot = ggplot(data=df[order(df$dens),]) +
+    geom_point(aes(x1,x2,color=dens),size=0.5) +
+    scale_color_grey(start=0.7,end=0) + 
+    geom_smooth(aes(x1,x2),method = "lm", se = FALSE,color="#ff8080", size=0.5) +
+    scale_x_continuous( name=xlab) +
+    scale_y_continuous(name=ylab) +
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
+          axis.title=element_text(size=8), legend.position = "none") 
+  
   return(ggplot)
 }
 
@@ -169,6 +199,16 @@ export.bed(gene_regions_pro_seq, con=file_pro_seq_halftimes, format='bed')
 
 cairo_pdf(paste(output_dir_plot,'ratios_pro_seq.pdf',sep=''),width = 6,height = 2)
 print(plot_ratios(pro_seq_data_chrX))
+dev.off()
+
+replicates = data.frame(No_Dox_A = log10(pro_seq_data$NoDoxA_RPKM), No_Dox_B = log10(pro_seq_data$NoDoxB_RPKM), Dox_24h_A = log10(pro_seq_data$Dox24hrA_RPKM), Dox_24h_B = log10(pro_seq_data$Dox24hrB_RPKM))
+is.na(replicates) <- sapply(replicates, is.infinite)
+replicates = replicates[complete.cases(replicates),]
+
+cairo_pdf(paste(output_dir_plot,'paper_figures_replicates_pro_seq.pdf',sep=''),width = 8,height = 3.5, onefile = TRUE)
+nodox = scatterplot_dense_colors(replicates$No_Dox_A,replicates$No_Dox_B, "No Dox A [log10(RPKM)]","No Dox B [log10(RPKM)]")
+dox24 = scatterplot_dense_colors(replicates$Dox_24h_A,replicates$Dox_24h_B, "Dox 24h A [log10(RPKM)]","Dox 24h B [log10(RPKM)]")
+grid.arrange(nodox,dox24,ncol=2)
 dev.off()
 
 ###################################################################################
@@ -366,7 +406,7 @@ plot_data = melt(plot_data)
 ggplot[[3]] = ggplot(plot_data,aes(y=value, x=variable, fill=chromosome)) + 
   stat_boxplot(geom ='errorbar',lwd=0.3) +
   geom_boxplot(outlier.size=-1,lwd=0.4) +
-  scale_fill_grey(start=0.4, end=0.7, label=c("autosomes","chromosome X")) +
+  scale_fill_grey(start=0.4, end=0.7, label=c("autosomes","Chromosome X")) +
   theme_minimal(base_family = "Source Sans Pro") + 
   theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), axis.title=element_text(size=8, margin = margin(t = 0)), axis.text.x = element_text(size=8,angle = 45,margin = margin(t = 0, b = 0)), 
         legend.text = element_text(size=8),legend.position = "top", legend.title = element_blank()) +

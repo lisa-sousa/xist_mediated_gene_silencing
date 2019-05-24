@@ -2,13 +2,14 @@
 #input directories
 ###################################################################################
 
-deepTools = '/home/lisasous/tools/deepTools2.0/bin/'
-file_metadata = '/project/lncrna/Xist/data/chip_seq/metadata/metadata_filtered_by_coverage.txt'
-experiment_dir = '/project/ngs_marsico/Xist/bam/experiment/'
-control_dir = '/project/ngs_marsico/Xist/bam/control/'
-output_dir_data = '/project/lncrna/Xist/data/chip_seq/bigwigs/raw/'
-output_dir_plot = '/project/lncrna/Xist/plots/chip_seq_analysis/heatmap/data_raw/'
-gene_region = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_new_gene_annotation.bed'
+library(here)
+deepTools = '/home/lisasous/tools/deepTools2.0/bin/' #set path to deepTools 2.0 /bin/ folder
+file_metadata = here('data/chip_seq/metadata','metadata_filtered_by_coverage.txt')
+experiment_dir = '/project/ngs_marsico/Xist/bam/experiment/' #set path to directory with chip-seq bam files folder
+control_dir = '/project/ngs_marsico/Xist/bam/control/' #set path to directory with control bam files folder
+output_dir_data = here('data/chip_seq/bigwigs/raw/')
+output_dir_plot = here('plots/chip_seq_analysis/heatmap/data_raw/')
+gene_region = here('data/silencing_halftimes/fitted_data','halftimes_pro_seq_mm9_new_gene_annotation.bed')
 
 ###################################################################################
 #parameters

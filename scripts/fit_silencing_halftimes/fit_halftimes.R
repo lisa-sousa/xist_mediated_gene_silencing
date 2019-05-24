@@ -9,25 +9,27 @@ library(Cairo)
 library(ggplot2)
 library(gridExtra)
 library(cowplot)
+library(openxlsx)
+library(here)
 
 ###################################################################################
 #input files
 ###################################################################################
 
-input_dir_data = '/project/lncrna/Xist/data/silencing_halftimes/raw_data/'
-input_dir_gene_annotation = '/project/lncrna/Xist/data/annotation_files/gene_annotation/'
+input_dir_data = here('data/silencing_halftimes/raw_data/')
+input_dir_gene_annotation = here('data/annotation_files/gene_annotation/')
 
-file_pro_seq_raw = paste(input_dir_data,'PROseq.txt',sep='')
-file_mrna_seq_undiff_raw = paste(input_dir_data,'UndifferenciatedCells.txt',sep='')
-file_mrna_seq_diff_raw = paste(input_dir_data,'DifferenciatedCells.txt',sep='')
-file_gencode_gene_annotation = paste(input_dir_gene_annotation,'gencode.vM9.annotation.chrX.genes.bed',sep='')
+file_pro_seq_raw = paste(input_dir_data,'GSE121144_PROseq.xlsx',sep='')
+file_mrna_seq_undiff_raw = paste(input_dir_data,'GSE121144_mRNAseq_undifferenciated.xlsx',sep='')
+file_mrna_seq_diff_raw = paste(input_dir_data,'GSE121144_mRNAseq_differenciated.xlsx',sep='')
+file_gencode_gene_annotation = here('data/annotation_files/gene_annotation','gencode.vM9.annotation.chrX.genes.bed')
 
 ###################################################################################
 #output files
 ###################################################################################
 
-output_dir_plot = '/project/lncrna/Xist/plots/silencing_halftimes/'
-output_dir_data = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/'
+output_dir_plot = here('plots/silencing_halftimes/')
+output_dir_data = here('data/silencing_halftimes/fitted_data/')
 
 file_pro_seq_all = paste(output_dir_data,'halftimes_pro_seq_mm10_RSS_initial_ratio.txt',sep='')
 file_pro_seq_halftimes = paste(output_dir_data,'halftimes_pro_seq_mm10.bed',sep='')
@@ -157,11 +159,12 @@ scatterplot_dense_colors <- function(x1, x2, xlab, ylab){
 ####fit PRO-Seq data
 ###################################################################################
 
-pro_seq_data = read.table(file_pro_seq_raw,na.strings=c('NA','nd'),header=T,sep='\t')
+pro_seq_data = read.xlsx(file_pro_seq_raw,sheet=1,na.strings=c('NA','nd'))
 time = c(0,0.5,1,2,4,8,12,24)/24
 
 #remove rows with missing values and filter for X-chromosomal genes
 pro_seq_data = pro_seq_data[complete.cases(pro_seq_data),]
+pro_seq_data = cbind(pro_seq_data[,1:3],sapply(pro_seq_data[,4:ncol(pro_seq_data)], as.numeric))
 pro_seq_data_chrX = pro_seq_data[pro_seq_data$Chromosomes=='chrX',]
 
 #filter for genes that have at least 10 reads for every timestep
@@ -215,7 +218,7 @@ dev.off()
 ####fit undifferentiated mRNA-Seq data
 ###################################################################################
 
-mrna_seq_undiff_data = read.table(file_mrna_seq_undiff_raw,na.strings=c('NA','nd'),header=T,sep='\t')
+mrna_seq_undiff_data = read.xlsx(file_mrna_seq_undiff_raw,sheet=1,na.strings=c('NA','nd'))
 time = c(0,2,4,8,12,24)/24
 
 #filter out second replicate for each time point --> did not work very well
@@ -224,6 +227,7 @@ colnames(mrna_seq_undiff_data) = c('Genes','chr','strand','RPKM','NoDox_Ratio','
 
 #remove rows with missing values and filter for X-chromosomal genes
 mrna_seq_undiff_data = mrna_seq_undiff_data[complete.cases(mrna_seq_undiff_data),]
+mrna_seq_undiff_data = cbind(mrna_seq_undiff_data[,1:3],sapply(mrna_seq_undiff_data[,4:ncol(mrna_seq_undiff_data)], as.numeric))
 mrna_seq_undiff_data_chrX = mrna_seq_undiff_data[mrna_seq_undiff_data$chr=='chrX',]
 
 #filter for genes that have a more or less balanced initial ratio 
@@ -254,12 +258,13 @@ write.table(fitted_data_mrna_seq_undiff_filtered,file=file_mrna_seq_undiff_all,s
 export.bed(gene_regions_mrna_seq_undiff, con=file_mrna_seq_undiff_halftimes, format='bed')	
 
 #plot ratios
-mrna_seq_undiff_data = read.table(file_mrna_seq_undiff_raw,na.strings=c('NA','nd'),header=T,sep='\t')
+mrna_seq_undiff_data = read.xlsx(file_mrna_seq_undiff_raw,sheet=1,na.strings=c('NA','nd'))
 mrna_seq_undiff_data = mrna_seq_undiff_data[,-grep('_RPKM',colnames(mrna_seq_undiff_data))]
 colnames(mrna_seq_undiff_data)[4:15] = c('NoDoxA_Ratio','NoDoxB_Ratio','Dox2hrA_Ratio','Dox2hrB_Ratio','Dox4hrA_Ratio','Dox4hrB_Ratio','Dox8hrA_Ratio','Dox8hrB_Ratio',
                                          'Dox12hrA_Ratio','Dox12hrB_Ratio','Dox24hrA_Ratio','Dox24hrB_Ratio')
 #remove rows with missing values and filter for X-chromosomal genes
 mrna_seq_undiff_data = mrna_seq_undiff_data[complete.cases(mrna_seq_undiff_data),]
+mrna_seq_undiff_data = cbind(mrna_seq_undiff_data[,1:3],sapply(mrna_seq_undiff_data[,4:ncol(mrna_seq_undiff_data)], as.numeric))
 mrna_seq_undiff_data_chrX = mrna_seq_undiff_data[mrna_seq_undiff_data$Chromosomes=='chrX',]
 #filter for genes that have a more or less balanced initial ratio 
 initial_ratio = rowMeans(mrna_seq_undiff_data[,colnames(mrna_seq_undiff_data) %in% c('NoDoxA_Ratio','NoDoxB_Ratio')])
@@ -276,7 +281,7 @@ dev.off()
 ####fit differentiated mRNA-Seq data
 ###################################################################################
 
-mrna_seq_diff_data = read.table(file_mrna_seq_diff_raw,na.strings=c('NA','nd'),header=T,sep='\t')
+mrna_seq_diff_data = read.xlsx(file_mrna_seq_diff_raw,sheet=1,na.strings=c('NA','nd'))
 time = c(0,8,16,24,48)/24
 
 #only keep expression ratios
@@ -286,6 +291,7 @@ colnames(mrna_seq_diff_data) = c('Genes','chr','strand','NoDoxA_RPKM','NoDoxB_RP
 
 #remove rows with missing values and filter for X-chromosomal genes
 mrna_seq_diff_data = mrna_seq_diff_data[complete.cases(mrna_seq_diff_data),]
+mrna_seq_diff_data = cbind(mrna_seq_diff_data[,1:3],sapply(mrna_seq_diff_data[,4:ncol(mrna_seq_diff_data)], as.numeric))
 mrna_seq_diff_data_chrX = mrna_seq_diff_data[mrna_seq_diff_data$chr=='chrX',]
 
 #filter for genes that have a more or less balanced initial ratio 
@@ -392,6 +398,7 @@ ggplot[[2]] = ggplot(data=plot_data, aes(x=variable, y=value, shape=gene, colour
   guides(fill=guide_legend(nrow=3), col=guide_legend(nrow=3))
 
 #####plot ratio chrX vs autosomes
+pro_seq_data$Chromosomes = as.factor(pro_seq_data$Chromosomes)
 pro_seq_data$Chromosomes = factor(pro_seq_data$Chromosomes, levels = c("autosomes",levels(pro_seq_data$Chromosomes)))
 pro_seq_data$Chromosomes[pro_seq_data$Chromosomes != "chrX"] = "autosomes"
 

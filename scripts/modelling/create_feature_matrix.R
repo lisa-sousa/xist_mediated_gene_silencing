@@ -1,36 +1,39 @@
 ###################################################################################
-#libraries
+#libraries and tools
 ###################################################################################
 
 library(energy)
 library(rtracklayer)
 library(GenomicRanges)
 library(Biostrings)
+library(openxlsx)
+library(here)
+bedTools = '/home/lisasous/tools/bedtools2/bin' #set path to bedtools 2 /bin/ folder
+
 
 ###################################################################################
 #directories
 ###################################################################################
 
-region_name = 'promoter'
-bedTools = '/home/lisasous/tools/bedtools2/bin/'
-output_dir = '/project/lncrna/Xist/data/modelling/feature_matrix/'
-tmp_dir = paste(output_dir,'tmp',sep='')
-cmd = paste('mkdir',tmp_dir)
-system(cmd)
+feature_matrix_name = 'promoter_matrix_reannotated_normRAdjusted_pro_seq_genes'
+output_dir = 'data/modelling/feature_matrix'
+tmp_dir = here(output_dir,'tmp')
+system(paste('mkdir',tmp_dir))
+
 
 ###################################################################################
 #load gene annotation
 ###################################################################################
 
 ##########genes mm9 from gencode
-genes_mm9_gencode_file = '/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.mm9.bed'
+genes_mm9_gencode_file = here('data/annotation_files/gene_annotation','gencode.vM9.annotation.chrX.genes.mm9.bed')
 genes_mm9_gencode_table = read.table(genes_mm9_gencode_file,sep = '\t',header=F)
 colnames(genes_mm9_gencode_table) = c('chr','start','end','gene_name','score','strand')
 
 
 ##########silencing halftimes
-halftimes_file = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed'
-#halftimes_file = '/project/lncrna/Xist/data_lisa/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.reannotated.with.rr.mm9.bed' #all genes
+halftimes_file = here('data/silencing_halftimes/fitted_data','halftimes_pro_seq_mm9_reannotated_with_rr.bed')
+#halftimes_file = here('data/annotation_files/gene_annotation','gencode.vM9.annotation.chrX.genes.reannotated.with.rr.mm9.bed') #all genes
 halftimes_table = read.table(file = halftimes_file, sep = '\t', header = F)
 colnames(halftimes_table) = c('chr','start','end','gene_name','halftime','strand')
 
@@ -50,15 +53,16 @@ gene_regions_1000 = promoters(gene_regions, upstream = 500, downstream = 500)
 tmp_gene_regions_1000_file = paste(tmp_dir,'/tmp_gene_regions_1000_file.bed',sep='')
 export.bed(gene_regions_1000,tmp_gene_regions_1000_file,format='bed')
 
+
 ###################################################################################
 #load chip-seq data
 ###################################################################################
 
-input_dir = '/project/lncrna/Xist/data/chip_seq/normalized_counts/reannotated_normRAdjusted_pro_seq_genes/'
-#input_dir = '/project/lncrna/Xist/data/chip_seq/normalized_counts/reannotated_normRAdjusted_all_chrX_genes/' #all genes
+input_dir = here('data/chip_seq/normalized_counts/reannotated_normRAdjusted_pro_seq_genes/')
+#input_dir = here('data/chip_seq/normalized_counts/reannotated_normRAdjusted_all_chrX_genes/') #all genes
 
 #metadata
-file_metadata = '/project/lncrna/Xist/data/chip_seq/metadata/metadata_normalization_regions.txt'
+file_metadata = here('data/chip_seq/metadata','metadata_normalization_regions.txt')
 metadata = read.table(file_metadata,sep='\t',header=T,comment.char='')
 colnames(metadata)[1] = 'feature'
 metadata$feature = as.character(metadata$feature)
@@ -84,14 +88,15 @@ for (i in 1:nrow(metadata)) {
   chip_seq_table = merge(chip_seq_table,chip_seq,by='gene_name')
 }
 
+
 ###################################################################################
 #compute genomic features
 ###################################################################################
 
 ##########distance to closest topological domain (TAD) (mapped to mm9)
-TADs_file = '/project/lncrna/Xist/data/annotation_files/TADs/HindIII_combined/topological_domains_chrX.domains'
-TADs = read.table(TADs_file,sep = '\t',header=F)
-TADs = c(TADs$V2,TADs$V3)
+TADs_file = here('data/annotation_files/TADs','nature11082-s2.xlsx')
+TADs = read.xlsx(TADs_file, sheet = 4, colNames = F)
+TADs = c(TADs$X2[TADs$X1=="chrX"],TADs$X3[TADs$X1=="chrX"])
 all_distances <- abs(outer(halftimes_table$TSS,TADs,FUN="-"))
 distance_TAD_table = data.frame(gene_name = halftimes_table$gene_name, distance_to_TAD_border = apply(all_distances,1,min))
 
@@ -105,7 +110,7 @@ colnames(gene_density_gencode_table) = c('gene_name','gene_density')
 
 
 ##########overlap with Xist initiation site (mapped to mm9)
-initiation_sites_file = '/project/lncrna/Xist/data/annotation_files/xist_initiation_sites/1hr-Xist-Initiation-Sites_mm9.bed'
+initiation_sites_file = here('data/annotation_files/xist_initiation_sites','1hr-Xist-Initiation-Sites_mm9.bed')
 tmp_overlap_initiation_file = paste(tmp_dir,'/tmp_initiation_sites.txt',sep='')
 cmd = paste(bedTools,'intersectBed -a ',tmp_gene_regions_file,' -b ',initiation_sites_file,' -c > ',tmp_overlap_initiation_file,sep='')
 system(cmd)
@@ -120,8 +125,8 @@ distance_xist_table = data.frame(gene_name = halftimes_table$gene_name, distance
 
 
 ##########distance (closest) and overlap to Lamina Associated Domain (LADs)
-LADs_file = '/project/lncrna/Xist/data/annotation_files/LADs/lads.csv'
-LADs_table = read.table(LADs_file,sep='\t',header=T)
+LADs_file = here('data/annotation_files/LADs','1-s2.0-S1097276510003217-mmc2.xlsx')
+LADs_table = read.xlsx(LADs_file, sheet = 1)
 LADs_table = LADs_table[LADs_table$seqname == 'chrX',]
 tmp_LADs_file = paste(tmp_dir,'/tmp_LADs_file.bed',sep='')
 export.bed(LADs_table,tmp_LADs_file,format='bed')
@@ -138,10 +143,10 @@ distance_LAD_table = data.frame(gene_name = halftimes_table$gene_name, distance_
 
 
 ##########Hi-C interaction between gene promoter and other regulatory regions (mapped to mm9)
-hic_promoter_other_file = '/project/lncrna/Xist/data/annotation_files/Hi-C_data/ESC_promoter_other_significant_interactions_HIC.txt'
+hic_promoter_other_file = here('data/annotation_files/Hi-C_data','ESC_promoter_other_significant_interactions_HIC.txt')
 hic_promoter_other_table = read.table(hic_promoter_other_file,sep='\t',header=T)
 
-hic_promoter_promoter_file = '/project/lncrna/Xist/data/annotation_files/Hi-C_data/ESC_promoter_promoter_significant_interactions_HIC.txt'
+hic_promoter_promoter_file = here('data/annotation_files/Hi-C_data','ESC_promoter_promoter_significant_interactions_HIC.txt')
 hic_promoter_promoter_table = read.table(hic_promoter_promoter_file,sep='\t',header=T)
 
 hic_table = data.frame(gene_name = halftimes_table$gene_name, number_interactions_HiC_all = 0, mean_interaction_strength_HiC_all = 0, number_interactions_HiC_promoter = 0, 
@@ -158,13 +163,13 @@ for(i in 1:nrow(hic_table)){
 }
 hic_table[is.na(hic_table)] = 0
 
+
 ##########HICap interaction between gene promoter and other regulatory regions (mapped to mm9)
-hicap_promoter_enhancer_file = '/project/lncrna/Xist/data/annotation_files/HICap_data/Promoter_Enhancer_Interactions.csv'
+hicap_promoter_enhancer_file = here('data/annotation_files/HICap_data','Promoter_Enhancer_Interactions.csv')
 hicap_promoter_enhancer_table = read.table(hicap_promoter_enhancer_file,sep='\t',header=T)
 
-hicap_promoter_promoter_file = '/project/lncrna/Xist/data/annotation_files/HICap_data/Promoter_Promoter_Interactions.csv'
+hicap_promoter_promoter_file = here('data/annotation_files/HICap_data','Promoter_Promoter_Interactions.csv')
 hicap_promoter_promoter_table = read.table(hicap_promoter_promoter_file,sep='\t',header=T)
-
 
 hicap_table = data.frame(gene_name = halftimes_table$gene_name, number_interactions_HiCap_promoter = 0, number_interactions_HiCap_enhancer = 0, number_interactions_HiCap_all = 0)
 for(i in 1:nrow(hicap_table)){
@@ -178,7 +183,7 @@ for(i in 1:nrow(hicap_table)){
 
 
 ##########DNA methylation 
-dna_methylation_file = '/project/lncrna/Xist/data/annotation_files/Bisulfite_Seq_data/GSE30202_BisSeq_ES_CpGmeth.tsv'
+dna_methylation_file = here('data/annotation_files/Bisulfite_Seq_data','GSE30202_BisSeq_ES_CpGmeth.tsv.gz')
 dna_methylation_table = read.table(dna_methylation_file,sep='\t',header=T)
 dna_methylation_table = dna_methylation_table[dna_methylation_table$chr == 'chrX',]
 dna_methylation_table = data.frame(chr = dna_methylation_table$chr, start = dna_methylation_table$position, end = dna_methylation_table$position, name = 'meth_base',
@@ -201,8 +206,9 @@ for(i in 1:nrow(dna_methylation_table)){
 }
 dna_methylation_table$DNA_methylation_BS_Seq[is.na(dna_methylation_table$DNA_methylation_BS_Seq)] = 0
 
+
 ##########CpG islands
-CpG_island_file = '/project/lncrna/Xist/data/annotation_files/CpG_islands/CGI_mm9_ucsc'
+CpG_island_file = here('data/annotation_files/CpG_islands','CGI_mm9_ucsc')
 CpG_island_table = read.table(CpG_island_file,sep='\t')
 CpG_island_table = data.frame(chr = CpG_island_table$V2, start = CpG_island_table$V3, end = CpG_island_table$V4, name = 'CpG_island', score = 0, strand = '+')
 
@@ -217,7 +223,7 @@ CpG_island_table = data.frame(gene_name = overlap_CpG_island_table$V4, overlap_w
 
 
 ##########CpG content
-mm9_fasta = '/project/lncrna/Xist/data/annotation_files/mouse_genome/mm9.fa'
+mm9_fasta = here('data/annotation_files/mouse_genome','mm9.fa') ## data not provided, please download mm9 genome in fasta format
 
 tmp_gene_regions_1000_fasta = paste(tmp_dir,'/tmp_gene_regions_1000_file.fa',sep='')
 cmd = paste(bedTools,'fastaFromBed -fi ',mm9_fasta,' -bed ',tmp_gene_regions_1000_file,' -fo ',tmp_gene_regions_1000_fasta,sep='')
@@ -231,7 +237,7 @@ CpG_content_table = data.frame(gene_name = halftimes_table$gene_name, CpG_conten
 
 
 ##########distance (closest) to LINE and LINE density in 700kb around each gene
-LINEs_file = '/project/lncrna/Xist/data/annotation_files/LINEs/LINEs_mm9.bed'
+LINEs_file = here('data/annotation_files/LINEs','LINEs_mm9.bed')
 LINEs_table = read.table(LINEs_file,sep='\t')
 colnames(LINEs_table) = c("chr","start","end","name","score","strand","dispStart","dispEnd","col")
 LINEs_table = LINEs_table[LINEs_table$chr == 'chrX',]
@@ -250,68 +256,9 @@ all_distances = abs(outer(halftimes_table$TSS,LINEs,FUN="-"))
 distance_LINE_table = data.frame(gene_name = halftimes_table$gene_name, distance_to_LINE = apply(all_distances,1,min))
 
 
-# ##########PRO-seq RPKM at time point 0
-# proseq_table = read.table(file = "/project/lncrna/Xist/data_lisa/silencing_halftimes/raw_data/PROseq.txt", sep='\t', header=T)
-# proseq_rpkm_table = data.frame(gene_name=proseq_table$Genes, proseq_rpkm = rowMeans(cbind(proseq_table$NoDoxA_RPKM,proseq_table$NoDoxB_RPKM)))
-
-
-# ##########Pausing Index
-# pausing_index_table = read.table(file = "/project/lncrna/Xist/data_lisa/annotation_files/pausing_data/NoDox_all_highPI_pausedata", sep='\t', header=T)
-# pausing_index_table = pausing_index_table[pausing_index_table$chr == 'chrX',]
-# pausing_index_table = pausing_index_table[pausing_index_table$PI != -1,]
-#
-# #only keep one transcript per gene (most 5') because we do not have transcript information for silencing genes
-# duplicates = pausing_index_table$name[duplicated(pausing_index_table$name)]
-# for(i in 1:length(duplicates)){
-#   duplicated_gene_name = duplicates[i]
-#   transcripts = pausing_index_table[pausing_index_table$name == duplicated_gene_name,]
-#   five_prime_transcript = transcripts[which.min(transcripts$pr_start),]
-#   pausing_index_table = pausing_index_table[!(pausing_index_table$name == duplicated_gene_name),]
-#   pausing_index_table = rbind(pausing_index_table,five_prime_transcript)
-# }
-#
-# pausing_index_table = data.frame(gene_name = pausing_index_table$name, promoter_density = pausing_index_table$prDens,
-#                                  gene_density_pro_seq = pausing_index_table$gbDens, pausing_index = pausing_index_table$PI)
-#
-
-# ##########bivalency
-# bivalency_table = read.table(file = "/project/lncrna/Xist/data_lisa/annotation_files/bivalency/bivalncy_table.csv", sep='\t', header=T)
-# bivalency_table$start = 0
-#
-# #only keep one transcript per gene (most 5') because we do not have transcript information for silencing genes
-# duplicates = bivalency_table$Gene.s.[duplicated(bivalency_table$Gene.s.)]
-# for(i in 1:length(duplicates)){
-#   duplicated_gene_name = duplicates[i]
-#   transcripts = bivalency_table[bivalency_table$Gene.s. == duplicated_gene_name,]
-#   for(j in 1:nrow(transcripts)){
-#     transcripts$start[j] = as.numeric(unlist(strsplit(unlist(strsplit(as.character(transcripts$TSS.Pos[j]),split = ':'))[2],split = '-'))[1])
-#   }
-#   five_prime_transcript = transcripts[which.min(transcripts$start),]
-#   bivalency_table = bivalency_table[!(bivalency_table$Gene.s. == duplicated_gene_name),]
-#   bivalency_table = rbind(bivalency_table,five_prime_transcript)
-# }
-#
-# bivalency_table = data.frame(gene_name = bivalency_table$Gene.s., CpG_class = bivalency_table$Class, bivalent = bivalency_table$ESC)
-# bivalency_table$CpG_class =as.character(bivalency_table$CpG_class)
-# bivalency_table$CpG_class[bivalency_table$CpG_class != 'HCP'] = 0
-# bivalency_table$CpG_class[bivalency_table$CpG_class == 'HCP'] = 1
-# bivalency_table$CpG_class =as.numeric(bivalency_table$CpG_class)
-# bivalency_table$bivalent = as.character(bivalency_table$bivalent)
-# bivalency_table$bivalent[bivalency_table$bivalent != 'K4+K27'] = 0
-# bivalency_table$bivalent[bivalency_table$bivalent == 'K4+K27'] = 1
-# bivalency_table$bivalent = as.numeric(bivalency_table$bivalent)
-
-
-##########RNA-Seq at time point 0 --> not mappable bause of missing transcript information for rates and missing start/stop information to select the most 5' one
-# rnaseq_rpkm_table = read.table(file = "/project/lncrna/Xist/old/Data/all_refgene_rpkm_final.data", sep='\t', header=T)
-# rnaseq_rpkm_table = na.omit(rnaseq_rpkm_table)
-# rnaseq_rpkm_table = data.frame(gene_name=rnaseq_rpkm_table$gene_name, trans_name = rnaseq_rpkm_table$trans_name,
-#                                rnaseq_rpkm=rowMeans(cbind(rnaseq_rpkm_table$A134T9_RPKM,rnaseq_rpkm_table$A134T10_RPKM)))
-
-
 ##########remove tmp files
-cmd = paste('rm -rf',tmp_dir)
-system(cmd)
+system(paste('rm -rf',tmp_dir))
+
 
 ###################################################################################
 #merge all tables
@@ -331,12 +278,7 @@ merged_tables = merge(merged_tables, CpG_island_table, by = 'gene_name', all.x =
 merged_tables = merge(merged_tables, CpG_content_table, by = 'gene_name', all.x = T, all.y = F)
 merged_tables = merge(merged_tables, LINE_density_table, by = 'gene_name', all.x = T, all.y = F)
 merged_tables = merge(merged_tables, distance_LINE_table, by = 'gene_name', all.x = T, all.y = F)
-#merged_tables = merge(merged_tables, proseq_rpkm_table, by = 'gene_name', all.x = T, all.y = F)
-#merged_tables = merge(merged_tables, pausing_index_table, by = 'gene_name', all.x = T, all.y = F)
-#merged_tables = merge(merged_tables, bivalency_table, by = 'gene_name', all.x = T, all.y = F)
 
-#for all empty entries (NA) write a 0 into data frame
-#merged_tables[is.na(merged_tables)] = 0
 
 ###################################################################################
 #create matrix and save it
@@ -355,14 +297,11 @@ matrix_table$halftime = NULL
 matrix_table$overlap_with_Xist_entry_sites = as.factor(matrix_table$overlap_with_Xist_entry_sites)
 matrix_table$overlap_with_CpG_islands = as.factor(matrix_table$overlap_with_CpG_islands)
 matrix_table$overlap_with_LADs = as.factor(matrix_table$overlap_with_LADs)
-#matrix_table$CpG_class = as.factor(matrix_table$CpG_class)
-#matrix_table$bivalent = as.factor(matrix_table$bivalent)
 
-
-#########Save data_set and target
+#save data_set and target
 data_set = matrix_table
 halftime = halftime
 
-save(data_set,halftime,file = paste(output_dir,region_name,'_matrix.RData',sep=''))
+save(data_set,halftime,file = here(output_dir,paste(feature_matrix_name,'.RData',sep='')))
 
 

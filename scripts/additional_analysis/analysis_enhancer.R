@@ -6,13 +6,14 @@ library(reshape2)
 library(ggplot2)
 library(gridExtra)
 library(Cairo)
+library(here)
+library(ecoflux) #install.packages("remotes");  remotes::install_github("jpshanno/ecoflux")  --> package to obtain scientific notion in 10 ^ format
 
 ###################################################################################
 #input directories
 ###################################################################################
 
-dir_data = "/project/lncrna/Xist/data/"
-dir_enhancers = paste(dir_data,"annotation_files/enhancers/",sep="")
+dir_enhancers = here("data/annotation_files/enhancers/")
 file_HiCap_enhancers = "Promoter_Enhancer_Interactions.txt"
 file_output = "gene_enhancers.bed"
 
@@ -42,9 +43,8 @@ write.table(enhancer_bed[1:6],paste(dir_enhancers,file_output,sep=""),col.names 
 #load enhancer matrix and create different enhancer sets (all, strongest, closest) 
 ###################################################################################
 
-output_dir = "/project/lncrna/Xist/plots/additional_analysis/"
-file_halftimes = paste(dir_data,"silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt",sep="")
-file_feature_matrix = paste(dir_data,"modelling/feature_matrix/promoter_matrix_normRAdjusted_enhancer.RData",sep="")
+file_halftimes = here("data/silencing_halftimes/fitted_data","halftimes_pro_seq_mm10_RSS_initial_ratio.txt")
+file_feature_matrix = here("data/modelling/feature_matrix","promoter_matrix_normRAdjusted_enhancer.RData")
 
 hic_inteactions = c("mean_interaction_strength_HiC_all","mean_interaction_strength_HiC_promoter","mean_interaction_strength_HiC_xist")
 
@@ -165,7 +165,7 @@ plot_continuous_feature <- function(feature,column_all,column_strongest,column_c
   ggbox = ggplot(data_set_plot, aes(x = enhancer_set, y = value, fill = silencing_class)) + 
     geom_boxplot(alpha=0.7,notch = F,outlier.size=0.2,lwd=0.4) +
     labs(fill="silencing class",title=feature, subtitle= paste("p-value all: ",signif(wilcox_all,2),"\np-value strongest:",signif(wilcox_strongest,2),"\np-value closest:",signif(wilcox_close,2))) +
-    scale_y_continuous(name = "feature",labels = scales::scientific) + 
+    scale_y_continuous(name = "feature",labels = scientific_10x, breaks = scales::pretty_breaks(n=3)) + 
     scale_x_discrete(name = "enhancer set") + 
     theme_minimal(base_family = "Source Sans Pro") + 
     theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), 
@@ -180,7 +180,7 @@ plot_continuous_feature <- function(feature,column_all,column_strongest,column_c
 #generate plots for features at enhancer 
 ###################################################################################
 
-cairo_pdf(paste(output_dir,"analysis_enhancer.pdf",sep=""),height = 4, width = 4,onefile = T)
+cairo_pdf(here("plots/additional_analysis","analysis_enhancer.pdf"),height = 4, width = 4,onefile = T)
 
 boxplots = list()
 for(i in 1:(ncol(data_set_all)-2)){
@@ -213,7 +213,7 @@ dev.off()
 ###################################################################################
 
 ##plots boxplots of specific features
-cairo_pdf(paste(output_dir,"paper_figures_enhancer.pdf",sep=""),height = 10, width = 12)
+cairo_pdf(here("plots/additional_analysis","paper_figures_enhancer.pdf"),height = 10, width = 12)
 
 boxplots = list()
 colnumbers = c(5,8,14,28,41,40,43,44,62,64,59,77,60,76,66,68)

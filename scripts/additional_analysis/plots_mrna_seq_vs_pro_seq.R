@@ -1,19 +1,20 @@
 library(gridExtra)
 library(ggplot2)
+library(here)
 
 ###################################################################################
 #load data
 ###################################################################################
 
-pro_seq_file = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm10.bed"
+pro_seq_file = here('data/silencing_halftimes/fitted_data','halftimes_pro_seq_mm10.bed')
 pro_seq_table = read.table(pro_seq_file,sep='\t',header=F)
 colnames(pro_seq_table) = c("Chromosomes","Start","End","Genes","halftime","Strand")
 
-mrna_seq_undiff_file = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_undiff_mm10.bed"
+mrna_seq_undiff_file = here('data/silencing_halftimes/fitted_data','halftimes_mrna_seq_undiff_mm10.bed')
 mrna_seq_undiff_table = read.table(mrna_seq_undiff_file,sep='\t',header=T)
 colnames(mrna_seq_undiff_table) = c("Chromosomes","Start","End","Genes","halftime","Strand")
 
-mrna_seq_diff_file = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_diff_mm10.bed"
+mrna_seq_diff_file = here('data/silencing_halftimes/fitted_data','halftimes_mrna_seq_diff_mm10.bed')
 mrna_seq_diff_table = read.table(mrna_seq_diff_file,sep='\t',header=F)
 colnames(mrna_seq_diff_table) = c("Chromosomes","Start","End","Genes","halftime","Strand")
 
@@ -64,7 +65,7 @@ pro_vs_undiff = scatterplot_dense_colors(pro_mrna_undiff_table$halftime.x,pro_mr
 pro_vs_diff = scatterplot_dense_colors(pro_mrna_diff_table$halftime.x,pro_mrna_diff_table$halftime.y,'PRO-seq undiff.','mRNA-seq diff.')
 diff_vs_undiff = scatterplot_dense_colors(mrna_undiff_diff_table$halftime.x,mrna_undiff_diff_table$halftime.y,'mRNA-seq undiff.','mRNA-seq diff.')
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_figures_mrna_seq_vs_pro_seq.pdf",width = 2,height = 4.3, onefile = TRUE)
+cairo_pdf(here('plots/additional_analysis','paper_figures_mrna_seq_vs_pro_seq.pdf'),width = 2,height = 4.3, onefile = TRUE)
 grid.arrange(diff_vs_undiff,pro_vs_undiff,pro_vs_diff,ncol=1)
 dev.off()
 

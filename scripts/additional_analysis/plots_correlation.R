@@ -5,14 +5,15 @@
 library(Cairo)
 library(gplots)
 library(corrplot)
+library(here)
 
 ###################################################################################
 #data and directories
 ###################################################################################
 
-output_directory = '/project/lncrna/Xist/plots/additional_analysis/'
+output_directory = here('plots/additional_analysis/')
 
-load('/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData')
+load(here('data/modelling/feature_matrix','promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData'))
 
 for(i in 1:ncol(data_set)){
   if(is.factor(data_set[,i])){

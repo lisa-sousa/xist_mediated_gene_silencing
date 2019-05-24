@@ -62,15 +62,15 @@ plot_data_boxpots <- function(output_directory_plots_thr, data, class0_label, cl
       feature0 = column_target[column_target[,1]==0,] # the feature
       feature1 = column_target[column_target[,1]==1,] # the feature
       
-      wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
+      wilcox = scientific_10x(wilcox.test(feature0[,2],feature1[,2])$p.value)
       
       feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
                            gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
                            gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
       
       gg_box = ggplot(column_target, aes(x=column,y=halftime)) + 
-        geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
-        labs(title=feature_title, subtitle= paste("wilcox test:",signif(wilcox,2))) +
+        geom_boxplot(colour = "#4d4d4d",fill="lightgrey",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+        labs(title=feature_title, subtitle=parse(text=paste0('"p-value = "~',wilcox))) +
         scale_x_discrete(name = "overlap",breaks=c(0,1),labels=c("no","yes")) + 
         scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') + 
         theme_minimal(base_family = "Source Sans Pro") + 
@@ -82,20 +82,20 @@ plot_data_boxpots <- function(output_directory_plots_thr, data, class0_label, cl
       class0 = column_target[column_target$target==0,]
       class1 = column_target[column_target$target==1,]
       
-      pears_corr = cor(column_target[,1],column_target[,2])
-      pears_pValue = cor.test(column_target[,1],column_target[,2])$p.value
+      pears_corr = scientific_10x(cor(column_target[,1],column_target[,2]))
+      pears_pValue = scientific_10x(cor.test(column_target[,1],column_target[,2])$p.value)
 
-      wilcox = wilcox.test(class0[,1],class1[,1])$p.value
+      wilcox = scientific_10x(wilcox.test(class0[,1],class1[,1])$p.value)
 
       feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
                                  gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
                                                             gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
       
       gg_box = ggplot(column_target, aes(x=target,y=column)) + 
-        geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
-        labs(title=feature_title, subtitle= paste("pearson cor",signif(pears_corr,2),"with p-value:",signif(pears_pValue,2),"\nwilcox test:",signif(wilcox,2))) +
+        geom_boxplot(colour = "#4d4d4d",fill="lightgrey",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+        labs(title=feature_title, subtitle=parse(text=paste0('"p-value = "~',wilcox))) +
         scale_x_discrete(name = "class",breaks=c(0,1),labels=c(class0_label,class1_label)) + 
-        scale_y_continuous(name = "signal",labels = scales::scientific) +
+        scale_y_continuous(name = "signal",labels = scientific_10x, breaks = scales::pretty_breaks(n=2), limits = c(0,max(1,max(column_target$column)))) +
         theme_minimal(base_family = "Source Sans Pro") + 
         theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, angle = 45, hjust=1), axis.text.y = element_text(size=8), 
               axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle = element_text(size=8)) 
@@ -109,15 +109,15 @@ plot_data_boxpots <- function(output_directory_plots_thr, data, class0_label, cl
       feature0 = column_target[column_target[,1]==0,] # the feature
       feature1 = column_target[column_target[,1]==1,] # the feature
       
-      wilcox = wilcox.test(feature0[,2],feature1[,2])$p.value
+      wilcox = scientific_10x(wilcox.test(feature0[,2],feature1[,2])$p.value)
       
       feature_title = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",
                            gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',
                            gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',feature,perl=T))))))))
       
       gg_box = ggplot(column_target, aes(x=column,y=halftime)) + 
-        geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
-        labs(title=feature_title, subtitle= paste("wilcox test:",signif(wilcox,2))) +
+        geom_boxplot(colour = "#4d4d4d",fill="lightgrey",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
+        labs(title=feature_title, subtitle=parse(text=paste0('"p-value = "~',wilcox))) +
         scale_x_discrete(name = "overlap",breaks=c(0,1),labels=c("no","yes")) + 
         scale_y_continuous(breaks=c(0,1,2,3,3.5), label=c("0","1","2","3",">3.5"), name='half-time [days]') + 
         theme_minimal(base_family = "Source Sans Pro") + 
@@ -263,7 +263,7 @@ create_predictions_list <- function(predictions,data_set_predictions,file_gene_a
   table_SNPs = read.table(file=file_SNPs, header=F ,sep="\t")[c(4,5)]
   colnames(table_SNPs) = c('Genes','number_of_SPNs')
   
-  table_RPKM = read.table(file=file_RPKM,na.strings=c("NA","nd"),header=T,sep='\t')
+  table_RPKM = read.xlsx(file_RPKM,sheet = 1,na.strings=c("NA","nd"))
   table_RPKM = table_RPKM[table_RPKM$Chromosomes == "chrX",c(1,idx_RPKM)]
   
   #data_set_predictions$Genes = row.names(data_set_predictions)
@@ -446,7 +446,7 @@ plot_error_rates <- function(output_directory_plots_thr, random_forest_model_all
   plot_df = melt(model_error,id.vars = c("feature_set"))
   
   
-  cairo_pdf(file = paste(output_directory_plots_thr,'error_rate.pdf',sep=''), width = 4, height = 4)
+  cairo_pdf(file = paste(output_directory_plots_thr,'error_rate.pdf',sep=''), width = 3, height = 3)
   gg_box = ggplot(plot_df, aes(x=variable,y=value,fill = feature_set)) + 
     geom_boxplot(alpha = 0.7,outlier.size=0.1,lwd=0.4) +
     scale_fill_manual("feature set",values=c("#cccccc", "#87aade"),labels=c("all features","top features")) +
@@ -663,14 +663,13 @@ plot_clustering_anova <- function(output_directory_plots_thr,title,k,data_set_pl
     
     gg_box = ggplot(data_plot, aes(x=cluster,y=feature)) + 
       geom_boxplot(colour = "#4d4d4d",fill="lightgrey",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
-      labs(title=feature_title, subtitle= paste("p-value:",signif(p_value_table$p_value[i],3))) +
+      labs(title=feature_title, subtitle= parse(text=paste0('"p-value = "~',scientific_10x(p_value_table$p_value[i])))) +
       scale_x_discrete(name = "cluster") + 
-      scale_y_continuous(name = "signal",labels = scales::scientific) +
+      scale_y_continuous(name = "signal",labels = scientific_10x, breaks = scales::pretty_breaks(n=2)) +
       theme_minimal(base_family = "Source Sans Pro") + 
       theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8, hjust=1), axis.text.y = element_text(size=8), 
             axis.title=element_text(size=8),plot.title = element_text(size=9),plot.subtitle = element_text(size=8)) 
     print(gg_box)
-    
   }
   dev.off() 
 }
@@ -714,25 +713,4 @@ plot_clustering_heatmap <- function(output_directory_plots_thr,k,title,data_set_
   print(ggplot)  
   dev.off()
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

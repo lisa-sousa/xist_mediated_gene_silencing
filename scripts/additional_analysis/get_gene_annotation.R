@@ -4,12 +4,13 @@
 
 library(biomaRt)
 library(rtracklayer)
+library(here)
 
 ###################################################################################
 #process downloaded gencode file https://www.gencodegenes.org/mouse_releases/
 ###################################################################################
 
-gene_annotation_gencode = read.table(file="/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.gtf", sep = "\t")
+gene_annotation_gencode = read.table(file=here("data/annotation_files/gene_annotation","gencode.vM9.annotation.gtf"))
 gene_annotation_gencode = gene_annotation_gencode[gene_annotation_gencode$V3 == "gene",]
 gene_annotation_gencode = gene_annotation_gencode[gene_annotation_gencode$V1 == "chrX",]
 gene_annotation_gencode = gene_annotation_gencode[,c(1,4,5,7,9)]

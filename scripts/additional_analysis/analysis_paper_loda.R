@@ -10,12 +10,12 @@ library(here)
 #directories
 ###################################################################################
 
-output_dir = "/project/lncrna/Xist/plots/additional_analysis/"
+output_dir = "plots/additional_analysis"
 
-input_dir_clones = "/project/lncrna/Xist/data/modelling/model/clones/"
+input_dir_clones = "data/modelling/model/clones"
 predictions_clones = c("predictions_clones_86.txt","predictions_clones_87.txt","predictions_clones_109.txt","predictions_clones_190.txt","predictions_clones_228.txt","predictions_clones_273.txt")
 
-input_dir = "/project/lncrna/Xist/data/annotation_files/xist_transgenes/"
+input_dir = "data/annotation_files/xist_transgenes"
 clone = c("86","87","109","190","228","273")
 chr = c("chrX","chrX","chrX","chrX","chr12","chr12")
 
@@ -42,13 +42,13 @@ get_clone_table <- function(file, chr){
 
 ###calculate normalized AER
 get_foldchange <- function(input_dir,chr,clone,pseudocount){
-  table_clone_no_Dox_rep1 = get_clone_table(paste(input_dir,chr,"_clones/",clone,"_noDox_1.txt",sep=""),chr)
-  table_clone_no_Dox_rep2 = get_clone_table(paste(input_dir,chr,"_clones/",clone,"_noDox_2.txt",sep=""),chr)
+  table_clone_no_Dox_rep1 = get_clone_table(here(paste(input_dir,"/",chr,"_clones",sep=""),paste(clone,"_noDox_1.txt",sep="")),chr)
+  table_clone_no_Dox_rep2 = get_clone_table(here(paste(input_dir,"/",chr,"_clones",sep=""),paste(clone,"_noDox_2.txt",sep="")),chr)
   table_clone_no_Dox = merge(table_clone_no_Dox_rep1,table_clone_no_Dox_rep2,by="Genes")
   table_clone_no_Dox$mean_ratio = rowMeans(table_clone_no_Dox[,2:3])
   
-  table_clone_five_days_rep1 = get_clone_table(paste(input_dir,chr,"_clones/",clone,"_5Days_1.txt",sep=""),chr)
-  table_clone_five_days_rep2 = get_clone_table(paste(input_dir,chr,"_clones/",clone,"_5Days_2.txt",sep=""),chr)
+  table_clone_five_days_rep1 = get_clone_table(here(paste(input_dir,"/",chr,"_clones",sep=""),paste(clone,"_5Days_1.txt",sep="")),chr)
+  table_clone_five_days_rep2 = get_clone_table(here(paste(input_dir,"/",chr,"_clones",sep=""),paste(clone,"_5Days_2.txt",sep="")),chr)
   table_clone_five_days = merge(table_clone_five_days_rep1,table_clone_five_days_rep2,by="Genes")
   table_clone_five_days$mean_ratio = rowMeans(table_clone_five_days[,2:3])
   
@@ -81,27 +81,37 @@ scatterplot_dense_colors <- function(x1, x2, xlab, ylab, main){
   
   ## Use densCols() output to get density at each point
   x = densCols(x1,x2, colramp=colorRampPalette(c("black", "white")))
-  df$dens = col2rgb(x)[1,] + 1L
+  df$dens = as.factor(col2rgb(x)[1,] + 1L)
   
   ## Map densities to colors
   cols = colorRampPalette(c("#000099", "#00FEFF", "#45FE4F", "#FCFF00", "#FF9400", "#FF3100"))(256)
   cols = colorRampPalette(c("grey","black"))(256)
   df$col = cols[df$dens]
   
+  cor = cor.test(x1,x2)
+  
   ## Plot it, reordering rows so that densest points are plotted on top
-  par(mfrow=c(1,1),mar=c(5,5,7,5),oma=c(3,3,3,3))
-  plot(x2~x1, data=df[order(df$dens),], pch=20, col=col, cex=2, cex.lab=1.7, cex.axis=2, cex.main=2, xlim = c(0,1), ylim = c(0,2), ylab = ylab, xlab = xlab,main = main)
-  abline(lm(x2~x1))
+  ggplot = ggplot(data=df[order(df$dens),]) +
+    geom_point(aes(x1,x2,color=dens),size=0.5) +
+    scale_color_grey(start=0.7,end=0) + 
+    labs(title=main, subtitle = paste('r=',round(cor$estimate,2),"\np=",signif(cor$p.value,2),sep="")) +
+    geom_smooth(aes(x1,x2),method = "lm", se = FALSE,color="#ff8080", size=0.5) +
+    scale_x_continuous(name=xlab, limits = c(0,1)) +
+    scale_y_continuous(name=ylab) +
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size=8), axis.text.y = element_text(size=8), 
+          axis.title=element_text(size=8), legend.position = "none",plot.title = element_text(size=8), plot.subtitle = element_text(size=7)) 
+  print(ggplot)
 }
 
 ###################################################################################
 #perform permutation test and plot results
 ###################################################################################
 
-pdf(paste(output_dir,"analysis_paper_loda_boxplots.pdf",sep=""),width = 10,height = 10)
+cairo_pdf(here(output_dir,"analysis_paper_loda.pdf"),width = 4,height = 4,onefile = T)
 
 clone_performance = NULL
-clone_fc = list()
+clone_fc = NULL
 bootstrap_performance = as.data.frame(matrix(0,nrow = B,ncol = length(clone)))
 
 for(i in 1:length(clone)){
@@ -109,10 +119,10 @@ for(i in 1:length(clone)){
   table_clone = get_foldchange(input_dir,chr[i],clone[i],pseudocount)
   print(paste("genes in clone:",nrow(table_clone)))
   
-  predictions = read.table(file = paste(input_dir_clones,predictions_clones[i],sep=""),header = T)
+  predictions = read.table(file = here(input_dir_clones,predictions_clones[i]),header = T)
   table_clone_predictions = merge(table_clone,predictions,by="Genes")
   table_clone_predictions = table_clone_predictions[table_clone_predictions$class == 0 | table_clone_predictions$class == 1,]
-  clone_fc[[i]] = table_clone_predictions$foldchange
+  clone_fc = rbind(clone_fc,data.frame(foldchange=table_clone_predictions$foldchange,clone=clone[i],chr=chr[i]))
   print(paste("genes with predictions:",nrow(table_clone_predictions)))
   
   thr_foldchange = 0.9
@@ -130,64 +140,64 @@ for(i in 1:length(clone)){
   print(paste("not silenced:",nrow(table_clone_predictions_fc[table_clone_predictions_fc$class == 1,])))
   
   cortest = cor.test(table_clone_predictions$vote,table_clone_predictions$foldchange)
-  scatterplot_dense_colors(table_clone_predictions$vote,table_clone_predictions$foldchange,"vote(class0)","foldchange",paste("clone",clone[i],"\nr=",signif(cortest$estimate,3),"\np-value:",signif(cortest$p.value,3)))
+  scatterplot_dense_colors(table_clone_predictions$vote,table_clone_predictions$foldchange,"vote(class0)","foldchange",paste("clone",clone[i]))
 
   table_clone_predictions$class = as.factor(table_clone_predictions$class)
 
   wilcox =wilcox.test(table_clone_predictions$foldchange[table_clone_predictions$class==0],table_clone_predictions$foldchange[table_clone_predictions$class==1])$p.value
-  gg_box = ggplot(table_clone_predictions, aes(x=class,y=foldchange)) + geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "black",alpha = 0.7,outlier.shape = 16) +
-    ggtitle(paste("clone",clone[i],"Wilcox-Test:",signif(wilcox,3))) + theme_bw() + 
-    theme(axis.text.x=element_text(hjust = 0.5,size=10),axis.text.y=element_text(size=10),axis.title = element_text(face="bold", size=15), 
-          plot.title = element_text(hjust = 0.5,size=15,face='bold'),plot.margin = unit(c(2,2,2,2), "cm"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank()) + 
+  gg_box = ggplot(table_clone_predictions, aes(x=class,y=foldchange)) + 
+    geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) + 
+    labs(title=paste("clone",clone[i]), subtitle = paste("Wilcox-Test:",signif(wilcox,3))) +
+    theme_minimal(base_family = "Source Sans Pro") + 
+    theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
+          axis.text.x = element_text(size=8, hjust=1), axis.text.y = element_text(size=8), 
+          axis.title=element_text(size=8),plot.title = element_text(size=8),plot.subtitle = element_text(size=7)) +
     scale_x_discrete(name = "silencing class") + scale_y_continuous(name = "folchange",limits = c(0,2))
   print(gg_box)
 
 }
-
-###calculate max density
-col = brewer.pal(6,"Set2")
-max = c()
-for(i in 1:length(clone)){
-  density = density(clone_fc[[i]])
-  max[i] = max(density$y)
-}
-
-###plot normalized AER distribution for each clone
-plot(density(clone_fc[[1]]),col=col[1],xlab = "foldchange",main="foldchange distribution per clone",ylim=c(0,max(max)),xlim=c(0,2))
-for(i in 2:length(clone)){
-  lines(density(clone_fc[[i]]),col=col[i])
-}
-legend("topleft",legend = clone,col = col,lty=1)
-
-dev.off()
 
 ###plot histogram and boxplots
 colnames(bootstrap_performance) = clone
 performance = data.frame(ind = factor(clone), y = clone_performance[,1]*100)
 mean = data.frame(ind = factor(clone), y = colMeans(bootstrap_performance)*100)
 
-pdf(paste(output_dir,"analysis_paper_loda_histogram_boxplot.pdf",sep=""))
-
 ggplot(stack(bootstrap_performance*100), aes(x = ind, y = values)) +  
   geom_boxplot(notch=FALSE,fill = "lightgrey", colour = "grey",alpha = 0.7,outlier.shape = "",width=0.5) + 
   geom_jitter(position=position_jitter(h = 1,w=0.25),size=0.01,color="grey") +
   stat_summary(fun.y="mean", geom="point", color = 'black',pch="_",size=18) +
-  theme_bw() + theme(axis.text.x=element_text(size=10),axis.text.y=element_text(size=10),axis.title = element_text(face="bold", size=13),
-        plot.margin = unit(c(2,2,2,2), "cm"), 
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) + 
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), 
+        axis.title=element_text(size=8), plot.title = element_text(size=8)) + 
   scale_x_discrete(name = "clone") + scale_y_continuous(name = "genes predicted as silenced (%)", limits = c(20,90)) +
   geom_point(data = data.frame(x = factor(clone), y = clone_performance[,1]*100),aes(x=x, y=y, size=15),color = 'red',pch="_",size=18)
-
-ggplot(stack(bootstrap_performance*100), aes(x = values)) + 
-  #geom_density(bw=.02, colour="black", fill="white") +
-  geom_histogram(binwidth=0.9, colour="black", fill="white") + 
-  facet_grid(ind ~ .) +
-  geom_vline(aes(xintercept = y),performance, size=1, colour="red")+
-  geom_vline(aes(xintercept = y),mean, size=0.5, colour="black",linetype="dashed")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-                          axis.text.x=element_text(size=10),axis.text.y=element_text(size=15),axis.title = element_text(face="bold", size=13),plot.margin = unit(c(2,2,2,2), "cm"))+
-  scale_y_continuous(breaks=c(0,300),name = "# permutations") + scale_x_continuous(name="genes predicted as silenced (%)")
-
 dev.off()
+
+#plot histogram of clone predictions
+cairo_pdf(here(output_dir,"paper_figures_loda_histogram.pdf"),width = 2.7,height = 2.7,onefile = T)
+ggplot(stack(bootstrap_performance*100), aes(x = values)) + 
+  geom_histogram(binwidth=0.9, colour="black", fill="white",lwd=0.3) + 
+  facet_grid(ind ~ .) +
+  geom_vline(aes(xintercept = y),performance, size=0.4, colour="red") +
+  geom_vline(aes(xintercept = y),mean, size=0.4, colour="black",linetype="dashed") +
+  scale_y_continuous(breaks=c(0,300),name = "# permutations") + scale_x_continuous(name="genes predicted as silenced (%)") +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), 
+        axis.title=element_text(size=8), plot.title = element_text(size=8))
+dev.off()
+
+#print AER distribution for each clone
+cairo_pdf(here(output_dir,"paper_figures_loda_AER_density.pdf"),width = 5,height = 3,onefile = T)
+ggplot(clone_fc, aes(x=foldchange,colour=clone)) +
+  geom_density(aes(linetype=clone),data=clone_fc,alpha=.4, lwd=0.5) + 
+  scale_x_continuous(limits=c(0,2), name='normalized allelic expression ratio (AER)') +
+  scale_y_continuous(name='distribution of normalized AER') +
+  theme_minimal(base_family = "Source Sans Pro") + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text=element_text(size=8), 
+        axis.title=element_text(size=8), plot.title = element_text(size=8), legend.title = element_text(size=8), 
+        legend.text = element_text(size=8)) 
+dev.off()
+
+
+
 

@@ -1,9 +1,12 @@
+library(here)
+library(ggplot2)
+
 ###################################################################################
 #load data
 ###################################################################################
 
-predictions = read.table("/project/lncrna/Xist/data/modelling/model/xci_escape_model/results_thr_0.9_-_1.6/random_forest_predictions_new_genes.txt",header = T)
-mrna_seq = read.table("/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_undiff_mm10.bed", header = F)
+predictions = read.table(here('data/modelling/model/xci_escape_model/results_thr_0.9_-_1.6','random_forest_predictions_new_genes.txt'))
+mrna_seq = read.table(here('data/silencing_halftimes/fitted_data','halftimes_mrna_seq_undiff_mm10.bed'))
 colnames(mrna_seq) = c("chr","start","end","Genes","halftime","strand")
 
 table = merge(predictions,mrna_seq,by="Genes")
@@ -36,7 +39,7 @@ scatterplot_dense_colors <- function(x1, x2, xlab, ylab, main){
 #generate plots
 ###################################################################################
 
-pdf("/project/lncrna/Xist/plots/additional_analysis/mRNA_seq_vs_predictions.pdf",height = 2,width = 2)
+pdf(here('plots/additional_analysis','mRNA_seq_vs_predictions.pdf'),height = 2,width = 2)
 
 wilcox = signif(wilcox.test(table$halftime[table$class == 0],table$halftime[table$class==1])$p.value,2)
 

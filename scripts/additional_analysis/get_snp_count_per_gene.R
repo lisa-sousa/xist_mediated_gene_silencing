@@ -4,19 +4,20 @@
 
 library(rtracklayer)
 library(GenomicRanges)
+library(here)
 
-bedTools = '/home/lisasous/tools/bedtools2/bin/'
+bedTools = '/home/lisasous/tools/bedtools2/bin/' #set path to bedtools 2 /bin/ folder
 
 ####################################################
 #directories and files
 ####################################################
 
-output_dir = "/project/lncrna/Xist/data/annotation_files/SNPs/"
+output_dir = here("data/annotation_files/SNPs/")
 
 #input files
-file_mm10_chrom_sizes = '/project/lncrna/Xist/data/annotation_files/mouse_genome/mm10.chrom.sizes'
-file_SNPs_raw = "/project/lncrna/Xist/data/annotation_files/SNPs/all_TX1072_cellLine_B6_CAST.txt"
-file_gencode = "/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.gtf"
+file_mm10_chrom_sizes = here('data/annotation_files/mouse_genome','mm10.chrom.sizes')
+file_SNPs_raw = here("data/annotation_files/SNPs","all_TX1072_cellLine_B6_CAST.txt") #download data from source (see Paper Supplement)
+file_gencode = here("data/annotation_files/gene_annotation","gencode.vM9.annotation.gtf") #download data from source (see Paper Supplement)
 
 #processing files
 file_SNPs_bed = paste(output_dir,rev(unlist(strsplit(unlist(strsplit(file_SNPs_raw,'[.]'))[1],"/")))[1],'.bed',sep='')

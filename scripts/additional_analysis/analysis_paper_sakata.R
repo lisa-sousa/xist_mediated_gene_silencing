@@ -4,15 +4,16 @@
 
 library(Cairo)
 library(ggplot2)
+library(here)
 
 ###################################################################################
 #directories and files
 ###################################################################################
 
-CAGdelta5_file = "/project/lncrna/Xist/data/annotation_files/CAGdelta5/GSE93031_allelic_expression.txt"
-model_matrix_file = "/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData"
-clustering_matrix = "/project/lncrna/Xist/data/modelling/model/silencing_dynamics_model/results_thr_0.5_0.9_1.3/best_clustering_data_set_k3.RData"
-output_dir = "/project/lncrna/Xist/plots/additional_analysis/" 
+CAGdelta5_file = here("data/annotation_files/xist_mutants_sakata","GSE93031_allelic_expression.txt")
+model_matrix_file = here("data/modelling/feature_matrix","promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData")
+clustering_matrix = here("data/modelling/model/silencing_dynamics_model/results_thr_0.5_0.9_1.3","best_clustering_data_set_k3.RData")
+output_dir = here("plots/additional_analysis/")
 
 ###################################################################################
 #load CAGdelta5 data

@@ -3,17 +3,15 @@ import argparse
 
 # before using this script download sra files with SRA toolkit
 # for information on the parameters type python mapping.py -h
-# example call: python mapping.py -i SRR1991254.sra -g GSE68195 -n input -s 0 -d mapping/
+# example call: python mapping.py -i SRR1991254.sra -g GSE68195 -n input -s 0 -np 10 -d mapping/ 
+#                                 -ch /project/lncrna/Xist/data/annotation_files/mouse_genome/mm9.chrom.sizes 
+#                                 -oa /project/epigenome/index/mm9
 
 # set the correct path to the tools --> set path to tools to "" if you can call them directly!!!
 ucsc_tools = "/scratch/ngsvin/bin/chip-seq/bigwig/" 
 bedTools = "/home/lisasous/tools/bedtools2/bin/"
 bowtie2 = "/home/lisasous/tools/bowtie2-2.3.4.3/"
 samtools = "/home/lisasous/tools/samtools-1.9/"
-
-# set the correct path to the chromosome files!!!
-chrom_file = "/project/lncrna/Xist/data/annotation_files/mouse_genome/mm9.chrom.sizes"
-ORG_ASSEMBLY="/project/epigenome/index/mm9"
 
 #============================================================
 #read terminal parameters
@@ -27,6 +25,8 @@ def args():
   args_parser.add_argument("-s","--input_source",help="sra or fastq file -> 0:sra; 1: fastq",type=int,required=True)
   args_parser.add_argument("-np","--number_processors",help="number of cores that should be used by bowtie for mapping (default: 4)",type=int,default=4)
   args_parser.add_argument("-d","--output_dir",help="output directory",type=str,required=True)
+  args_parser.add_argument("-ch","--chrom_file",help="file with chromsome sizes, e.g. mm9.chrom.sizes",type=str,required=True)
+  args_parser.add_argument("-oa","--ORG_ASSEMBLY",help="assembly file for genome",type=str,required=True)
   return args_parser.parse_args()
  
 #===============================================================
@@ -102,6 +102,8 @@ name = parameters.name
 input_source = parameters.input_source
 number_processors = parameters.number_processors
 output_dir = parameters.output_dir
+chrom_file = parameters.chrom_file
+ORG_ASSEMBLY = parameters.ORG_ASSEMBLY
 
 #=============================================================
 #executive part

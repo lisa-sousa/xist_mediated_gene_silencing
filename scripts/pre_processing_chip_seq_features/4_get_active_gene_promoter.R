@@ -2,13 +2,14 @@
 #tools
 ###################################################
 
-bedTools = '/home/lisasous/tools/bedtools2/bin/'
+library(here)
+bedTools = '/home/lisasous/tools/bedtools2/bin/' #set path to bedtools 2 /bin/ folder
 
 ###################################################
 #input/output files and directories
 ###################################################
 
-dir_gene_annotation = "/project/lncrna/Xist/data/annotation_files/gene_annotation/"
+dir_gene_annotation = here("/data/annotation_files/gene_annotation/")
 file_gencode = paste(dir_gene_annotation,"gencode.vM9.annotation.gtf",sep="")
 
 file_transcript_annotation = paste(dir_gene_annotation,"gencode.vM9.annotation.chrX.transcripts.bed",sep="")
@@ -16,7 +17,7 @@ file_transcript_annotation_200bp_aroundTSS = paste(dir_gene_annotation,"gencode.
 file_transcript_annotation_2000bp_aroundTSS = paste(dir_gene_annotation,"gencode.vM9.annotation.chrX.transcripts.2000bp.aroundTSS.bed",sep="")
 
 
-dir_regulatory_regions = "/project/lncrna/Xist/data/annotation_files/regulatory_regions_iris/"
+dir_regulatory_regions = here("data/annotation_files/regulatory_regions/")
 file_rr_replicate1 = paste(dir_regulatory_regions,"NoDoxA_0.8Named_regs250merge.bed",sep="")
 file_rr_replicate2 = paste(dir_regulatory_regions,"NoDoxB_0.8Named_regs250merge.bed",sep="")
 

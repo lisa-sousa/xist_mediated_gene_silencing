@@ -3,14 +3,17 @@ library(gridExtra)
 library(tidyr)
 library(plyr)
 library(dplyr)
+library(here)
 
+#files and parameters
+file_pyroseq = here('data/silencing_halftimes/raw_data','pyrosequencing_gene_class_validation.txt')
 control=nls.control(warnOnly=TRUE) # prevent stopping the fit
 not.silenced.genes = c('Maoa','Kcnd1','Pim2','Pqbp1','Wdr13')
 silenced.genes = c('Taf9b', 'Rnf128', 'Ripply1', 'Foxo4', 'Sat1','Nxt2')
 all.genes = c(silenced.genes,not.silenced.genes)
 
 # read in data
-data = read.table('/project/lncrna/Xist/data/silencing_halftimes/raw_data/pyrosequencing.txt',header=T,dec=',')
+data = read.table(file_pyroseq,header=T,dec=',')
 
 # get mean fraction B6 at t=0
 t0 = data %>% filter(time==0) %>% group_by(gene) %>% summarize(t0=mean(b6)) %>% ungroup()
@@ -46,7 +49,7 @@ for (g in c(1:length(all.genes))) {
 expression_all$gene = factor(expression_all$gene,levels = c(silenced.genes,not.silenced.genes),ordered = TRUE)
 halftime_label = data.frame(gene = all.genes, x= 0.1,y= 0.1,label = label)
 
-cairo_pdf(file='/project/lncrna/Xist/plots/silencing_halftimes/paper_figures_pyro_genes.pdf',height=3, width=6)
+cairo_pdf(file=here('plots/silencing_halftimes','paper_figures_pyro_genes.pdf'),height=3, width=6)
 ggplot(expression_all, aes(x=time_d,y=norm)) +
   geom_point(size=0.6)+
   geom_line(data=fit,aes(y=fitted_data)) +
@@ -63,13 +66,12 @@ dev.off()
 wil = wilcox.test(halftime$halftime[halftime$gene %in% not.silenced.genes],halftime$halftime[halftime$gene %in% silenced.genes])
 
 # Plot halftime of not silenced and silenced predicted genes as a dotplot
-
 halftime$class = "none"
 halftime$class[halftime$gene %in% silenced.genes] = "silenced"
 halftime$class[halftime$gene %in% not.silenced.genes] = "not silenced"
 halftime$class = factor(halftime$class,levels = c("silenced","not silenced"),ordered = TRUE)
 
-cairo_pdf(file='/project/lncrna/Xist/plots/silencing_halftimes/paper_figures_pyro_statistics.pdf',height=3, width=2)
+cairo_pdf(file=here('plots/silencing_halftimes','paper_figures_pyro_statistics.pdf'),height=3, width=2)
 ggplot(halftime,aes(x=class, y=halftime)) + 
   geom_jitter(position=position_jitter(0.2), size=0.6) + 
   stat_summary(fun.y=mean, fun.ymin=mean, fun.ymax=mean,geom="crossbar", color='grey', width=0.7, size=0.2)+

@@ -3,16 +3,17 @@
 ###################################################################################
 
 library(Cairo)
+library(here)
 
 ###################################################################################
 #input directories
 ###################################################################################
 
-samtools = '/home/lisasous/tools/samtools-1.9/samtools'
-file_metadata = '/project/lncrna/Xist/data/chip_seq/metadata/metadata_merged_replicates.txt'
-experiment_dir = '/project/ngs_marsico/Xist/bam/experiment/'
-control_dir = '/project/ngs_marsico/Xist/bam/control/'
-output_dir = '/project/lncrna/Xist/plots/chip_seq_analysis/library_coverage/'
+samtools = '/home/lisasous/tools/samtools-1.9/samtools' #set path to samtools 1.9 /samtools/ folder
+file_metadata = here('data/chip_seq/metadata','metadata_merged_replicates.txt')
+experiment_dir = '/project/ngs_marsico/Xist/bam/experiment/' #set path to directory with chip-seq bam files folder
+control_dir = '/project/ngs_marsico/Xist/bam/control/' #set path to directory with control bam files folder
+output_dir = here('plots/chip_seq_analysis/library_coverage/')
 
 ###################################################################################
 #load metadata

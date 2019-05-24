@@ -4,24 +4,25 @@
 
 library(Cairo)
 library(ggplot2)
-output_dir_plot = '/project/lncrna/Xist/plots/additional_analysis/'
+library(here)
+output_dir_plot = here('plots/additional_analysis/')
 
 ###################################################################################
 #PRO-seq
 ###################################################################################
 
-halftimes_file = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed'
+halftimes_file = here('data/silencing_halftimes/fitted_data','halftimes_pro_seq_mm9_reannotated_with_rr.bed')
 halftimes_table = read.table(file = halftimes_file, sep = '\t', header = F)
 colnames(halftimes_table) = c('chr','start','end','gene_name','halftime','strand')
 halftimes_table$TSS[halftimes_table$strand == '+'] = halftimes_table$start[halftimes_table$strand == '+']
 halftimes_table$TSS[halftimes_table$strand == '-'] = halftimes_table$end[halftimes_table$strand == '-']
 halftimes_table = halftimes_table[order(halftimes_table$TSS),]
 
-file_mm9_chrom_sizes = '/project/lncrna/Xist/data/annotation_files/mouse_genome/mm9.chrom.sizes'
+file_mm9_chrom_sizes = here('data/annotation_files/mouse_genome','mm9.chrom.sizes')
 mm9_chrom_sizes = read.table(file = file_mm9_chrom_sizes, header=F, sep='\t')
 colnames(mm9_chrom_sizes) = c('chr','length')
 
-initiation_sites_file = '/project/lncrna/Xist/data/annotation_files/xist_initiation_sites/1hr-Xist-Initiation-Sites_mm9.bed'
+initiation_sites_file = here('data/annotation_files/xist_initiation_sites','1hr-Xist-Initiation-Sites_mm9.bed')
 initiation_sites = read.table(initiation_sites_file)
 
 #plot distribution of halftimes
@@ -81,7 +82,7 @@ dev.off()
 #mRNA-seq undifferentiated
 ###################################################################################
 
-mrna_seq_undiff_file = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_undiff_mm9_reannotated_with_rr.bed"
+mrna_seq_undiff_file = here('data/silencing_halftimes/fitted_data','halftimes_mrna_seq_undiff_mm9_reannotated_with_rr.bed')
 mrna_seq_undiff_table = read.table(file = mrna_seq_undiff_file, sep = '\t', header = F)
 colnames(mrna_seq_undiff_table) = c('chr','start','end','gene_name','halftime','strand')
 mrna_seq_undiff_table$TSS[mrna_seq_undiff_table$strand == '+'] = mrna_seq_undiff_table$start[mrna_seq_undiff_table$strand == '+']
@@ -104,7 +105,7 @@ dev.off()
 #mRNA-seq differentiated
 ###################################################################################
 
-mrna_seq_diff_file = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_mrna_seq_diff_mm9_reannotated_with_rr.bed"
+mrna_seq_diff_file = here('data/silencing_halftimes/fitted_data','halftimes_mrna_seq_diff_mm9_reannotated_with_rr.bed')
 mrna_seq_diff_table = read.table(file = mrna_seq_diff_file, sep = '\t', header = F)
 colnames(mrna_seq_diff_table) = c('chr','start','end','gene_name','halftime','strand')
 mrna_seq_diff_table$TSS[mrna_seq_diff_table$strand == '+'] = mrna_seq_diff_table$start[mrna_seq_diff_table$strand == '+']

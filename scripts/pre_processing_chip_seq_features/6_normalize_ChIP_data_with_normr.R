@@ -6,19 +6,20 @@ library(normr)
 library(GenomicRanges)
 library(rtracklayer)
 library(bamsignals)
+library(here)
 
 ###################################################################################
 #input directories
 ###################################################################################
 
-file_genes = '/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed'
-#file_genes = '/project/lncrna/Xist/data_lisa/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.reannotated.with.rr.mm9.bed'
-#file_genes = "/project/lncrna/Xist/data/annotation_files/enhancers/gene_enhancers.bed"
-file_metadata = '/project/lncrna/Xist/data/chip_seq/metadata/metadata_normalization_regions.txt'
-file_mm9_chrom_sizes = '/project/lncrna/Xist/data/annotation_files/mouse_genome/mm9.chrom.sizes'
-ChIP_dir = '/project/ngs_marsico/Xist/bam/experiment/'
-ctrl_dir = '/project/ngs_marsico/Xist/bam/control/'
-output_dir = '/project/lncrna/Xist/data/chip_seq/normalized_counts/'
+file_genes = here('data/silencing_halftimes/fitted_data','halftimes_pro_seq_mm9_reannotated_with_rr.bed')
+#file_genes = here('data/annotation_files/gene_annotation','gencode.vM9.annotation.chrX.genes.reannotated.with.rr.mm9.bed') #all genes on chrX
+#file_genes = here('data/annotation_files/enhancers','gene_enhancers.bed') #enhancer regions
+file_metadata = here('data/chip_seq/metadata','metadata_normalization_regions.txt')
+file_mm9_chrom_sizes = here('data/annotation_files/mouse_genome','mm9.chrom.sizes')
+ChIP_dir = '/project/ngs_marsico/Xist/bam/experiment/' #set path to directory with chip-seq bam files folder
+ctrl_dir = '/project/ngs_marsico/Xist/bam/control/' #set path to directory with control bam files folder
+output_dir = here('data/chip_seq/normalized_counts/')
 
 ###################################################################################
 #load metadata

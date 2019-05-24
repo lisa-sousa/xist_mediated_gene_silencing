@@ -6,12 +6,13 @@ library(Cairo)
 library(ggplot2)
 library(cowplot)
 library(gridExtra)
+library(here)
 
 ###################################################################################
 #load data
 ###################################################################################
 
-table_halftimes = read.table("/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed")
+table_halftimes = read.table(here('data/silencing_halftimes/fitted_data','halftimes_pro_seq_mm9_reannotated_with_rr.bed'))
 halftimes = table_halftimes$V5
 
 early = halftimes[halftimes < 0.5]
@@ -29,7 +30,7 @@ table_pro_seq = rbind(table_pro_seq, data.frame(halftime = not_silenced, silenci
 ###################################################################################
 
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/plots_silencing_classes.pdf",width = 2,height = 3, onefile = TRUE)
+cairo_pdf(here('plots/additional_analysis','plots_silencing_classes.pdf'),width = 2,height = 3, onefile = TRUE)
 ggplot = ggplot(table_pro_seq, aes(x=silencing_class,y=halftime, fill=model)) + 
   geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=-1,lwd=0.4) + 
   ggtitle("Silencing classes based \non PRO-seq") + 
@@ -52,7 +53,7 @@ dev.off()
 ###################################################################################
 
 ####load pro-seq data
-table_halftimes = read.table("/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm9_reannotated_with_rr.bed")
+table_halftimes = read.table(here('data/silencing_halftimes/fitted_data','halftimes_pro_seq_mm9_reannotated_with_rr.bed'))
 halftimes = table_halftimes$V5
 
 early = halftimes[halftimes < 0.5]
@@ -67,10 +68,10 @@ table_pro_seq = rbind(table_pro_seq, data.frame(halftime = not_silenced, silenci
 
 
 ####load marks data
-load('/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData')
+load(here('data/modelling/feature_matrix','promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData'))
 table_halftimes = data.frame(gene = rownames(data_set), halftime = halftime)
 
-table_marks_paper = read.table(file = '/project/lncrna/Xist/data/annotation_files/escapees/metadata/2015_marks_gene_classes.txt',sep='\t',header = F)
+table_marks_paper = read.table(file = here('data/annotation_files/silencing_classes','silencing_classes_marks.txt'),sep='\t',header = F)
 colnames(table_marks_paper) = c('gene','silencing_class')
 
 table_marks = merge(table_halftimes,table_marks_paper,by='gene')[,2:3]
@@ -81,10 +82,10 @@ table_marks$source = "Differentiating mESCs"
 
 
 ####load borenzstein
-load('/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData')
+load(here('data/modelling/feature_matrix','promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData'))
 table_halftimes = data.frame(gene = rownames(data_set), halftime = halftime)
 
-table_NSMB_paper = read.table(file = '/project/lncrna/Xist/data/annotation_files/imprinted_xci_silencing_rates/consistent_genes_categories.txt',sep='\t',header = F)
+table_NSMB_paper = read.table(file = here('data/annotation_files/silencing_classes','silencing_classes_borensztein.txt'))
 colnames(table_NSMB_paper) = c('gene','silencing_class')
 
 table_boren = merge(table_halftimes,table_NSMB_paper,by='gene')
@@ -99,7 +100,7 @@ table_pro_seq$source = "PRO-seq in undiff. mESC"
 table = rbind(table_marks, table_boren, table_pro_seq)
 table$source = factor(table$source, levels = c("Differentiating mESCs","Pre-implantation embryos","PRO-seq in undiff. mESC"))
 
-cairo_pdf("/project/lncrna/Xist/plots/additional_analysis/paper_figures_silencing_classes.pdf",width = 4,height = 3.5, onefile = TRUE)
+cairo_pdf(here('plots/additional_analysis','paper_figures_silencing_classes.pdf'),width = 4,height = 3.5, onefile = TRUE)
 ggplot(table, aes(x=silencing_class,y=halftime, fill=model)) +
   geom_boxplot(colour = "#4d4d4d",alpha = 0.7,outlier.size=0.1,lwd=0.4) +
   facet_grid(. ~ source, labeller = label_wrap_gen(width = 20, multi_line = TRUE),scales = "free_x") +

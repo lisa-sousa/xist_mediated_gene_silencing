@@ -17,23 +17,27 @@ library(fpc)
 library(corrplot)
 library(scales)
 library(gridExtra)
-source("/project/lncrna/Xist/xist_mediated_gene_silencing/modelling/model_functions.R")
+library(here)
+library(openxlsx)
+library(ecoflux) #install.packages("remotes");  remotes::install_github("jpshanno/ecoflux")  --> package to obtain scientific notion in 10 ^ format
+source(here("scripts/modelling","model_functions.R"))
+
 
 ########################################
 #directories and files
 ########################################
 
-output_directory_plots = '/project/lncrna/Xist/plots/modelling/'
-output_directory_data = '/project/lncrna/Xist/data/modelling/model/'
+output_directory_plots = 'plots/modelling'
+output_directory_data = 'data/modelling/model'
 
-file_feature_matrix = '/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData'
-file_high_confidence_escapees = '/project/lncrna/Xist/data/annotation_files/escapees/escapees.RData'
-file_feature_matrix_predictions = '/project/lncrna/Xist/data/modelling/feature_matrix/promoter_matrix_reannotated_normRAdjusted_all_chrX_genes.RData'
-file_gene_annotation = "/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.reannotated.with.rr.bed"
-file_SNPs = "/project/lncrna/Xist/data/annotation_files/SNPs/gencode.vM9.annotation.SNP.count.bed"
-file_RPKM = "/project/lncrna/Xist/data/silencing_halftimes/raw_data/PROseq.txt"
-file_halftimes = "/project/lncrna/Xist/data/silencing_halftimes/fitted_data/halftimes_pro_seq_mm10_RSS_initial_ratio.txt"
-file_results = file(paste(output_directory_data,'log_results.txt',sep=''), open = "a")
+file_feature_matrix = here("data/modelling/feature_matrix","promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData")
+file_high_confidence_escapees = here("data/annotation_files/escapees","escapees.RData")
+file_feature_matrix_predictions = here("data/modelling/feature_matrix","promoter_matrix_reannotated_normRAdjusted_all_chrX_genes.RData")
+file_gene_annotation = here("data/annotation_files/gene_annotation","gencode.vM9.annotation.chrX.genes.reannotated.with.rr.bed")
+file_SNPs = here("data/annotation_files/SNPs","gencode.vM9.annotation.SNP.count.bed")
+file_RPKM = here("data/silencing_halftimes/raw_data","GSE121144_PROseq.xlsx")
+file_halftimes = here("data/silencing_halftimes/fitted_data","halftimes_pro_seq_mm10_RSS_initial_ratio.txt")
+file_results = file(here(output_directory_data,'log_results.txt'), open = "a")
 
 ########################################
 #setup parameters
@@ -109,11 +113,11 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         cat(paste('sampsize:',sampsize[1]), file = file_results, sep = "\n")
         
         #create output directories and files
-        output_directory_data_thr = paste(output_directory_data,"results_thr_",thr_silencing_lower,"_",thr_silencing_middle,"_",thr_silencing_upper,"/",sep='')
+        output_directory_data_thr = here(paste(output_directory_data,"/results_thr_",thr_silencing_lower,"_",thr_silencing_middle,"_",thr_silencing_upper,"/",sep=''))
         cmd = paste("mkdir",output_directory_data_thr)
         system(cmd)
         
-        output_directory_plots_thr =  paste(output_directory_plots,"results_thr_",thr_silencing_lower,"_",thr_silencing_middle,"_",thr_silencing_upper,"/",sep='')
+        output_directory_plots_thr =  here(paste(output_directory_plots,"/results_thr_",thr_silencing_lower,"_",thr_silencing_middle,"_",thr_silencing_upper,"/",sep=''))
         cmd = paste("mkdir",output_directory_plots_thr)
         system(cmd)
         

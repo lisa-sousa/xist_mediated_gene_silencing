@@ -84,3 +84,8 @@ for(i in 1:nrow(gene_annotation_gencode)){
 gene_annotation_gencode = gene_annotation_gencode[order(gene_annotation_gencode$gene_name),]
 
 write.table(gene_annotation_gencode[,c(1,2,3,4,6,5)], file = file_genes_SNP_count, sep = '\t', col.names = F, row.names = F, quote = F)
+system(paste("rm -rf",file_SNPs_bed))
+system(paste("rm -rf",file_exons_bed))
+system(paste("rm -rf",file_overlap_exons_SNPs))
+
+

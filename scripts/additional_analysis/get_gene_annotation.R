@@ -10,7 +10,7 @@ library(here)
 #process downloaded gencode file https://www.gencodegenes.org/mouse_releases/
 ###################################################################################
 
-gene_annotation_gencode = read.table(file=here("data/annotation_files/gene_annotation","gencode.vM9.annotation.gtf"))
+gene_annotation_gencode = read.table(file=here("data/annotation_files/gene_annotation","gencode.vM9.annotation.gtf"),comment.char = "#",sep="\t")
 gene_annotation_gencode = gene_annotation_gencode[gene_annotation_gencode$V3 == "gene",]
 gene_annotation_gencode = gene_annotation_gencode[gene_annotation_gencode$V1 == "chrX",]
 gene_annotation_gencode = gene_annotation_gencode[,c(1,4,5,7,9)]
@@ -31,7 +31,7 @@ gene_annotation_gencode$V9 = NULL
 gene_annotation_gencode = gene_annotation_gencode[,c(1,2,3,5,6,4)]
 colnames(gene_annotation_gencode) = c("chr","start","end","name","score","strand")
 gene_annotation_gencode = gene_annotation_gencode[order(gene_annotation_gencode$name),]
-write.table(gene_annotation_gencode, file='/project/lncrna/Xist/data/annotation_files/gene_annotation/gencode.vM9.annotation.chrX.genes.bed', sep='\t', quote = F, col.names = F, row.names = F)
+write.table(gene_annotation_gencode, file=here("data/annotation_files/gene_annotation","gencode.vM9.annotation.chrX.genes.bed"), sep='\t', quote = F, col.names = F, row.names = F)
 
 ###################################################################################
 #get genes from ensemble
@@ -52,7 +52,7 @@ listDatasets(ensembl)[listDatasets(ensembl)$"dataset" == "mmusculus_gene_ensembl
 #listAttributes(ensembl)
 
 #
-gene_annotation <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position', 'end_position', 'strand', 'external_gene_id','ucsc'), 
+gene_annotation <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position', 'end_position', 'strand', 'external_gene_name','ucsc'), 
                          filters = 'chromosome_name', values = 'X', mart = ensembl)
 
 gene_annotation$chromosome_name = paste('chr',gene_annotation$chromosome_name,sep='')

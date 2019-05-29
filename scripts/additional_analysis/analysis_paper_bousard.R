@@ -6,7 +6,7 @@ library(Cairo)
 #directories and files
 ###################################################################################
 
-file_mutant_fc = here("data/annotation_files/xist_mutants","FC_Dox_noDox_table_all_mutants_norm.txt")
+file_mutant_fc = here("data/annotation_files/xist_mutants_bousard","FC_Dox_noDox_table_all_mutants_norm.txt")
 file_cluster_matrix = here("data/modelling/model/silencing_dynamics_model/results_thr_0.5_0.9_1.3","best_clustering_data_set_k3.RData")
 
 ###################################################################################

@@ -240,6 +240,13 @@ output = one_entry_genes[,c(1,2,3,5,7,6)]
 write.table(output,file=file_output, sep="\t", col.names = F, row.names = F, quote = F)
 
 
-
+system(paste("rm -rf",file_transcript_annotation))
+system(paste("rm -rf",file_transcript_annotation_200bp_aroundTSS))
+system(paste("rm -rf",file_transcript_annotation_2000bp_aroundTSS))
+system(paste("rm -rf",file_rr_merged))
+system(paste("rm -rf",file_rr_sorted))
+system(paste("rm -rf",file_rr_collapsed))
+system(paste("rm -rf",file_overlap_transcript_200bp_aroundTSS_rr))
+system(paste("rm -rf",file_overlap_transcript_2000bp_aroundTSS_rr))
 
 

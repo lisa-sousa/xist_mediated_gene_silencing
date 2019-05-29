@@ -47,7 +47,7 @@ chrX	112311366	112372430	Apool	protein_coding	+
 chrX	98150626	98323215	Ar	protein_coding	+
 chrX	20797814	20860497	Araf	protein_coding	+
 chrX	73899313	73921870	Arhgap4	protein_coding	-
-chrX	169036750	169304435	Arhgap6	protein_coding	+
+chrX	169036750	169254074	Arhgap6	protein_coding	+
 chrX	95051926	95166307	Arhgef9	protein_coding	-
 chrX	134718020	134721917	Armcx1	protein_coding	+
 chrX	134807260	134807942	Armcx2	protein_coding	-
@@ -145,7 +145,7 @@ chrX	53243425	53269020	Fam122b	protein_coding	-
 chrX	137049594	137082503	Fam199x	protein_coding	+
 chrX	75143688	75144470	Fam220-ps	processed_pseudogene	+
 chrX	74384761	74393103	Fam3a	protein_coding	-
-chrX	107816126	107872909	Fam46d	protein_coding	+
+chrX	107816126	107870559	Fam46d	protein_coding	+
 chrX	74313033	74320149	Fam50a	protein_coding	+
 chrX	94355053	94367500	Fam90a1b	protein_coding	-
 chrX	164980592	164997269	Fancb	protein_coding	+
@@ -253,7 +253,7 @@ chrX	7558602	7605381	Gm36995	processed_transcript	-
 chrX	42147988	42150181	Gm37564	TEC	-
 chrX	102686292	102687029	Gm3880	unprocessed_pseudogene	-
 chrX	42489691	42491524	Gm43337	protein_coding	+
-chrX	101790053	101794476	Gm4779	antisense	-
+chrX	101791225	101794476	Gm4779	antisense	-
 chrX	114948913	114949371	Gm4914	processed_pseudogene	+
 chrX	12652303	12652662	Gm4984	processed_pseudogene	+
 chrX	21360940	21363022	Gm5124	transcribed_processed_pseudogene	+

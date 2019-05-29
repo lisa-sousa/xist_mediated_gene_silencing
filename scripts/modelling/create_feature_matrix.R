@@ -8,7 +8,7 @@ library(GenomicRanges)
 library(Biostrings)
 library(openxlsx)
 library(here)
-bedTools = '/home/lisasous/tools/bedtools2/bin' #set path to bedtools 2 /bin/ folder
+bedTools = '/home/lisasous/tools/bedtools2/bin/' #set path to bedtools 2 /bin/ folder
 
 
 ###################################################################################
@@ -165,10 +165,10 @@ hic_table[is.na(hic_table)] = 0
 
 
 ##########HICap interaction between gene promoter and other regulatory regions (mapped to mm9)
-hicap_promoter_enhancer_file = here('data/annotation_files/HICap_data','Promoter_Enhancer_Interactions.csv')
+hicap_promoter_enhancer_file = here('data/annotation_files/HiCap_data','Promoter_Enhancer_Interactions.csv')
 hicap_promoter_enhancer_table = read.table(hicap_promoter_enhancer_file,sep='\t',header=T)
 
-hicap_promoter_promoter_file = here('data/annotation_files/HICap_data','Promoter_Promoter_Interactions.csv')
+hicap_promoter_promoter_file = here('data/annotation_files/HiCap_data','Promoter_Promoter_Interactions.csv')
 hicap_promoter_promoter_table = read.table(hicap_promoter_promoter_file,sep='\t',header=T)
 
 hicap_table = data.frame(gene_name = halftimes_table$gene_name, number_interactions_HiCap_promoter = 0, number_interactions_HiCap_enhancer = 0, number_interactions_HiCap_all = 0)

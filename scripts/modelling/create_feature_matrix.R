@@ -41,7 +41,7 @@ halftimes_table$TSS[halftimes_table$strand == '+'] = halftimes_table$start[halft
 halftimes_table$TSS[halftimes_table$strand == '-'] = halftimes_table$end[halftimes_table$strand == '-']
 
 
-##########gene regions from start to end and 500 bp around the promoter
+##########gene regions from start to end and 1000 bp around the promoter
 gene_regions = GRanges(seqnames = halftimes_table$chr, ranges = IRanges(halftimes_table$start,halftimes_table$end), strand = halftimes_table$strand)
 mcols(gene_regions) = data.frame(name = halftimes_table$gene_name, score = halftimes_table$halftime)
 #mcols(gene_regions) = data.frame(name = halftimes_table$gene_name, score = 0) #all genes

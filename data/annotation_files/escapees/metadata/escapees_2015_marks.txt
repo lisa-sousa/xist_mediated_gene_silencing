@@ -9,7 +9,7 @@ Kdm5c	6
 Nkap	6
 Hcfc1	6
 Vbp1	6
-Jpx	6
+Jux	6
 Chm	6
 Gpm6b	6
 Odf1	6
@@ -21,7 +21,7 @@ Firre	6
 Fmr1	6
 Trmt2b	6
 Rbm41	6
-Vegfd	6
+Figf	6
 Mmgt1	6
 Siah1b	6
 Mid1	6

@@ -61,7 +61,7 @@ fitting_function <- function(t, start) {
 
 #normalize data and fit half-times with exponential decay function
 fit_data <- function(data,pseudo_count,time,fitted_data,control){
-  for (i in 1:nrow(data)) {
+  for(i in 1:nrow(data)) {
     
     # Transform the data such that you can fit relative reads from BL6
     data_trans = as.numeric(data[i,])

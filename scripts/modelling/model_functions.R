@@ -139,7 +139,7 @@ optimize_mtry <- function(data_set,target,mtry_seq,ntree,sampsize,thr_class_erro
   #calculate average error rate (100 runs) for each mtry value 
   error_rate_mtry = data.frame(mtry=mtry_seq,oob=0,class1=0,class2=0)
   for(i in 1:length(mtry_seq)){
-    error_rate = foreach(j=1:100,.combine='comb', .multicombine=TRUE, .packages='randomForest') %dopar% {
+    error_rate = foreach(j=1:50,.combine='comb', .multicombine=TRUE, .packages='randomForest') %dopar% {
       rf = randomForest(data_set, target, type="classification", ntree=ntree, mtry=mtry_seq[i], replace=FALSE, sampsize=sampsize)
       error_rate = rf$err.rate
       return(list(error_rate[ntree,1],error_rate[ntree,2],error_rate[ntree,3]))

@@ -245,7 +245,7 @@ LINEs_table = LINEs_table[LINEs_table$chr == 'chrX',]
 tmp_LINEs_file = paste(tmp_dir,'/tmp_LINEs_file.bed',sep='')
 export.bed(LINEs_table,tmp_LINEs_file,format='bed')
 
-tmp_LINE_density_file = paste(tmp_dir,'/tmp_gene_density.txt',sep='')
+tmp_LINE_density_file = paste(tmp_dir,'/tmp_LINE_density.txt',sep='')
 cmd = paste(bedTools,'windowBed -a ',tmp_gene_regions_file,' -b ',tmp_LINEs_file,' -w 350000 -c > ',tmp_LINE_density_file,sep='') #-w 	Base pairs added upstream and downstream of each entry in A when searching for overlaps in B. Default is 1000 bp.
 system(cmd)
 LINE_density_table = read.table(tmp_LINE_density_file,header=F,sep='\t')[,c(4,7)]

@@ -61,7 +61,7 @@ ncores = 20 # number of cores for parallelization
 test_set_min_size = 10 # minimum number of genes in OOB set
 ntree = 1000 # number of trees in the random forest 
 thr_class_error = 0.05 # maximal difference in error between class 0 and class 1, e.g. if class 0 has error 0.2 then class 1 has to have an error between 0.15 and 0.25
-runs = 500 # number of runs for stability test of random forest model
+runs = 100 # number of runs for stability test of random forest model
 B=300 #number of bootstraps for cluster stability analysis
 thr_anova_p_value = 0.05 # p-value threshold for anova test
 idx_RPKM = c(10,15) #idx_RPKM = c(5) #idx_RPKM = c(5,7)
@@ -170,8 +170,8 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         selected_features0 = random_forest_model_all_features[[5]]
         selected_features1 = random_forest_model_all_features[[6]]
         selected_features = unique(c(selected_features0[1:x],selected_features1[1:x]))
-        data_set_selected_features = data[[1]][colnames(data[[1]])%in%selected_features]
-        data_set_predictions_selected_features = data_set_predictions[colnames(data_set_predictions)%in%selected_features]
+        data_set_selected_features = data[[1]][,colnames(data[[1]])%in%selected_features]
+        data_set_predictions_selected_features = data_set_predictions[,colnames(data_set_predictions)%in%selected_features]
         
         print("optimize mtry parameter...")
         mtry_seq = seq(1,ncol(data_set_selected_features),by=1)

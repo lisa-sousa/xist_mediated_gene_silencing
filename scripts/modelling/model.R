@@ -53,7 +53,7 @@ class1_label = "late silenced genes"
 #threshold combination for "XCI/escape" model
 thr_silencing_lower_seq = c(0.9,1.0,1.1,1.2,1.3,1.4)
 thr_silencing_middle_seq = "-"
-thr_silencing_upper_seq = c(1.4,1.6,1.7,1.8,1.9,2.0)
+thr_silencing_upper_seq = c(1.4,1.5,1.6,1.7,1.8,1.9,2.0)
 class0_label = "silenced genes"
 class1_label = "not silenced genes"
 
@@ -241,7 +241,6 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         clustering_predictions = best_rf[[1]]
         names(clustering_predictions) = row.names(proximity)
         proximity_clustering(output_directory_plots_thr,output_directory_data_thr,"best",proximity,index,B,clustering_predictions,data,thr_anova_p_value)
-        
       }
     }
   }

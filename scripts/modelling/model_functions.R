@@ -338,7 +338,7 @@ plot_feature_importance <- function(output_directory_plots_thr, random_forest_mo
   rownames(meanImpClass0_plot) = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',
                                       gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',rownames(meanImpClass0_plot),perl=T))))))))
   
-  n = nrow(meanImpClass0_plot)
+  n = min(nrow(meanImpClass0_plot),50) #more than 50 features is hard to plot
   gg_box0 = ggplot(melt(t(meanImpClass0_plot)[,n:1]), aes(x=Var2,y=value)) + 
     geom_boxplot(fill="white",colour = "#4d4d4d",alpha = 0.7,outlier.size=0.2,lwd=0.4) +
     ggtitle(paste("feature importance",class0_label)) +
@@ -358,7 +358,7 @@ plot_feature_importance <- function(output_directory_plots_thr, random_forest_mo
   rownames(meanImpClass1_plot) = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',
                                       gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',rownames(meanImpClass1_plot),perl=T))))))))
   
-  n = nrow(meanImpClass1_plot)
+  n = min(nrow(meanImpClass1_plot),50) #more than 50 features is hard to plot
   gg_box1 = ggplot(melt(t(meanImpClass1_plot)[,n:1]), aes(x=Var2,y=value)) + 
     geom_boxplot(fill="white",colour = "#4d4d4d",alpha = 0.7,outlier.size=0.2,lwd=0.4) +
     ggtitle(paste("feature importance",class1_label)) +
@@ -387,7 +387,7 @@ plot_feature_importance_sorted <- function(output_directory_plots_thr, random_fo
   importance$mean = rowMeans(importance[,2:3])
   importance = importance[order(importance$mean,decreasing = T),]
   row.names(importance) = importance$feature
-  importance = as.matrix(importance[,2:3])
+  importance = as.matrix(importance[1:100,2:3]) #more than 100 features is hard to plot
   
   rownames(importance) = gsub("HiC ","Hi-C ",gsub("number interactions","number",gsub("mean interaction ","",gsub("_"," ",gsub("8WG16","unphosphorylated",gsub('_GLIB_*-?[0-9]*_-?[0-9]*','',
                               gsub('_ENCODE_[A-z]{4}_*-?[0-9]*_-?[0-9]*','',gsub('_GSE[0-9]*_-?[0-9,A-z]*_-?[0-9,A-z]*','',rownames(importance),perl=T))))))))
@@ -597,7 +597,7 @@ proximity_clustering <- function(output_directory_plots_thr,output_directory_dat
       plot_clustering_heatmap(output_directory_plots_thr,k,title,data_set_norm,title_heatmap)
       
       ###plot only significant features in heatmap
-      significant_features = p_value_table$feature[p_value_table$p_value < thr_anova_p_value]
+      significant_features = p_value_table$feature[p_value_table$p_value < thr_anova_p_value][1:50] #more than 50 features is hard to plot
       data_set_norm = cbind(data_set_plot[1:3],data_set_plot_sorted[colnames(data_set_plot_sorted) %in% significant_features])
       title_heatmap = paste("clustering_heatmap_significant_features_k",k,sep="")
       plot_clustering_heatmap(output_directory_plots_thr,k,title,data_set_norm,title_heatmap)

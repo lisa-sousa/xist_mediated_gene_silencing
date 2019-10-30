@@ -396,7 +396,7 @@ plot_feature_importance_sorted <- function(output_directory_plots_thr, random_fo
   matrix$Var1 = factor(matrix$Var1,levels = c(class1_label,class0_label),ordered = TRUE)
   
   # Create the heatmap
-  breaks=c(min(importance),0.01,0.2,0.3,0.4,0.5,1,2,3,4,5,10,max(importance))
+  breaks=sort(c(min(importance),0.01,0.2,0.3,0.4,0.5,1,2,3,4,5,10,max(importance)))
   mycol = c("white","#E2E2E2","#DBDCE0","#CFD0DA","#BEC1D4","#ABB0CC","#959CC3","#7D87B9","#6371AF","#4359A7","#023FA5","darkblue")
   
   
@@ -426,7 +426,7 @@ plot_optimization_top_features <- function(output_directory_plots_thr,error_tabl
     scale_shape_ordinal(name="Error",labels=c("total",class0_label,class1_label)) +
     geom_vline(xintercept = min,color="red") +
     scale_y_continuous(name = "error rate (%)",limits = c(0,50)) + 
-    scale_x_continuous(name = "number of features",breaks = sort(c(0,5,10,15,20,min))) +
+    scale_x_continuous(name = "number of features",breaks = sort(c(0,5,10,15,20,25,30,min))) +
     theme_minimal(base_family = "Source Sans Pro") +
     theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8),
           legend.text = element_text(size=8), legend.title = element_text(size=8), axis.title=element_text(size=8),plot.background=element_blank(),panel.border=element_blank()) 

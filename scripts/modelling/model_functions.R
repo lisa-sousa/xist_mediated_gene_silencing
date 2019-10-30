@@ -134,17 +134,17 @@ plot_data_boxpots <- function(output_directory_plots_thr, data, class0_label, cl
 #Random Forest: mtry parameter optimization
 ########################################
 
-optimize_mtry <- function(data_set,target,mtry_seq,ntree,sampsize,thr_class_error){
+optimize_mtry <- function(data_set,target,mtry_seq,ntree,sampsize,thr_class_error,mtry_runs){
   
-  #calculate average error rate (100 runs) for each mtry value 
+  #calculate average error rate (mtry_runs) for each mtry value 
   error_rate_mtry = data.frame(mtry=mtry_seq,oob=0,class1=0,class2=0)
   for(i in 1:length(mtry_seq)){
-    error_rate = foreach(j=1:100,.combine='comb', .multicombine=TRUE, .packages='randomForest') %dopar% {
+    error_rate = foreach(j=1:mtry_runs,.combine='comb', .multicombine=TRUE, .packages='randomForest') %dopar% {
       rf = randomForest(data_set, target, type="classification", ntree=ntree, mtry=mtry_seq[i], replace=FALSE, sampsize=sampsize)
       error_rate = rf$err.rate
       return(list(error_rate[ntree,1],error_rate[ntree,2],error_rate[ntree,3]))
     }
-    error_rate_mtry[i,2:4] = colMeans(sapply(error_rate, unlist)) #add the mean error rate over 100 runs for mtry value
+    error_rate_mtry[i,2:4] = colMeans(sapply(error_rate, unlist)) #add the mean error rate over "mtry_runs" runs for mtry value
   }
   
   #eliminate all combination where difference of errors between the groups is greater than threshold, butif distance > threshold adapt threshold

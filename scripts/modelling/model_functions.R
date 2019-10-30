@@ -542,7 +542,7 @@ proximity_clustering <- function(output_directory_plots_thr,output_directory_dat
   cat(paste("tree: ",title), file = file_results, sep = "\n")
   
   for(k in 2:6){ #max number of clusters for plotting: 6, exclude k=1
-    #if(index[k] != 1){
+    if(index[k] != 1 | (index[k] == 1 & k==2) | (index[k] == 1 & k==3)){
       boot_pam = clusterboot(dist(distance), B=B, bootmethod =c("boot"),multipleboot = T, clustermethod = pamkCBI, krange = k, seed = 15555, count=F)
       
       #sort clusters by number of class 0/1 genes in cluster
@@ -601,7 +601,7 @@ proximity_clustering <- function(output_directory_plots_thr,output_directory_dat
       data_set_norm = cbind(data_set_plot[1:3],data_set_plot_sorted[colnames(data_set_plot_sorted) %in% significant_features])
       title_heatmap = paste("clustering_heatmap_significant_features_k",k,sep="")
       plot_clustering_heatmap(output_directory_plots_thr,k,title,data_set_norm,title_heatmap)
-    #}
+    }
   } 
 }
 

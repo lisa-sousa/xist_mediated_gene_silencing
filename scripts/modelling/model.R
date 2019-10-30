@@ -62,6 +62,7 @@ test_set_min_size = 10 # minimum number of genes in OOB set
 ntree = 1000 # number of trees in the random forest 
 thr_class_error = 0.05 # maximal difference in error between class 0 and class 1, e.g. if class 0 has error 0.2 then class 1 has to have an error between 0.15 and 0.25
 runs = 500 # number of runs for stability test of random forest model
+mtry_runs = 100 # number of runs to calculate optimal mtry
 B=300 #number of bootstraps for cluster stability analysis
 thr_anova_p_value = 0.05 # p-value threshold for anova test
 idx_RPKM = c(10,15) #idx_RPKM = c(5) #idx_RPKM = c(5,7)
@@ -132,7 +133,7 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         
         print("optimize mtry parameter...")
         mtry_seq = seq(1,ncol(data[[1]]),by=2)
-        opt_mtry = optimize_mtry(data[[1]],data[[2]],mtry_seq,ntree,sampsize,thr_class_error)
+        opt_mtry = optimize_mtry(data[[1]],data[[2]],mtry_seq,ntree,sampsize,thr_class_error,mtry_runs)
         
         print("Random Forest stability test...")
         random_forest_model_all_features = stability_test(data[[1]], data[[2]], opt_mtry, ntree, sampsize, runs)
@@ -175,7 +176,7 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         
         print("optimize mtry parameter...")
         mtry_seq = seq(1,ncol(data_set_selected_features),by=1)
-        opt_mtry = optimize_mtry(data_set_selected_features,data[[2]],mtry_seq,ntree,sampsize,thr_class_error)
+        opt_mtry = optimize_mtry(data_set_selected_features,data[[2]],mtry_seq,ntree,sampsize,thr_class_error,mtry_runs)
         
         print("Random Forest stability test, predictions and proximities...")
         random_forest_model_top_features = stability_predictions_proximities(data_set_selected_features, data[[2]], opt_mtry, ntree, sampsize, runs, data_set_predictions_selected_features)

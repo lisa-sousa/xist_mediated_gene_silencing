@@ -203,9 +203,11 @@ logistic_regression <- function(data,training,runs){
         }
       }
     }
-    data_training = data_training[,-remove_factor]
-    data_test = data_test[,-remove_factor]
-    
+    if(!is.null(remove_factor)){
+      data_training = data_training[,-remove_factor]
+      data_test = data_test[,-remove_factor]
+    }
+
     logistic_regression_model = glm(target~.,family = binomial(link='logit'),data=data_training)
     coefficients = coef(logistic_regression_model)
     coefficients = coefficients[complete.cases(coefficients)]
@@ -264,8 +266,10 @@ regularized_logistic_regression <- function(data,training,alpha,runs,runs_lambda
         }
       }
     }
-    x_training = x_training[,-remove_factor]
-    x_test = x_test[,-remove_factor]
+    if(!is.null(remove_factor)){
+      x_training = x_training[,-remove_factor]
+      x_test = x_test[,-remove_factor]
+    }
     
     #run the model "runs_lambda" times to get a sequence of "runs_lambda" best lambdas
     best_lambdas = foreach(i=1:runs_lambda,.combine=c,.packages='glmnet') %dopar% {

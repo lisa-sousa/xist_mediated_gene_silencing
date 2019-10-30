@@ -132,7 +132,7 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         print("train model on all features...")
         
         print("optimize mtry parameter...")
-        mtry_seq = seq(1,ncol(data[[1]]),by=2)
+        mtry_seq = seq(1,ncol(data[[1]]),by=2) #mtry_seq = c(seq(1,46,by=3),seq(50,100,by=8),seq(110,ncol(data[[1]]),by=15))
         opt_mtry = optimize_mtry(data[[1]],data[[2]],mtry_seq,ntree,sampsize,thr_class_error,mtry_runs)
         
         print("Random Forest stability test...")
@@ -163,7 +163,7 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         print("feature selection...")
         
         print("optimize number of top features...")
-        top_feature_table = optimize_top_features(data[[1]],data[[2]],ntree,sampsize,runs,random_forest_model_all_features,thr_class_error)
+        top_feature_table = optimize_top_features(data[[1]],data[[2]],ntree,sampsize,runs,random_forest_model_all_features,thr_class_error,mtry_runs)
         x = which.min(top_feature_table[,2])
         print(paste('number of top features:',x))
         

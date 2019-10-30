@@ -200,19 +200,19 @@ stability_test <- function(data_set, target, mtry, ntree, sampsize, runs){
 #Random Forest: top feature optimization
 ########################################
 
-optimize_top_features <- function(data_set,target,ntree,sampsize,runs,random_forest_model,thr_class_error){
+optimize_top_features <- function(data_set,target,ntree,sampsize,runs,random_forest_model,thr_class_error,mtry_runs){
   
   #calculate error rate for each # of top features (x), maximim of x=20
   selected_features0 = random_forest_model[[5]]
   selected_features1 = random_forest_model[[6]]
   error_table = NULL
-  for(x in 2:min(c(length(selected_features0),length(selected_features1),20))){
+  for(x in 2:min(c(length(selected_features0),length(selected_features1),30))){
     data_set_top_x = data_set
     selected_features = unique(c(selected_features0[1:x],selected_features1[1:x]))
     data_set_top_x = data_set_top_x[,colnames(data_set_top_x)%in%selected_features]
     
     mtry_seq = seq(1,ncol(data_set_top_x),by=1)
-    opt_mtry = optimize_mtry(data_set_top_x,target,mtry_seq,ntree,sampsize,thr_class_error)
+    opt_mtry = optimize_mtry(data_set_top_x,target,mtry_seq,ntree,sampsize,thr_class_error,mtry_runs)
     model_error = stability_test(data_set_top_x, target, opt_mtry, ntree, sampsize, runs)[[1]]
     
     error_table = rbind(error_table,c(x,round(colMeans(model_error),2)))
@@ -541,8 +541,8 @@ proximity_clustering <- function(output_directory_plots_thr,output_directory_dat
   
   cat(paste("tree: ",title), file = file_results, sep = "\n")
   
-  for(k in 1:4){ #max number of clusters for plotting: 10
-    if(index[k] != 1){
+  for(k in 2:6){ #max number of clusters for plotting: 6, exclude k=1
+    #if(index[k] != 1){
       boot_pam = clusterboot(dist(distance), B=B, bootmethod =c("boot"),multipleboot = T, clustermethod = pamkCBI, krange = k, seed = 15555, count=F)
       
       #sort clusters by number of class 0/1 genes in cluster
@@ -601,7 +601,7 @@ proximity_clustering <- function(output_directory_plots_thr,output_directory_dat
       data_set_norm = cbind(data_set_plot[1:3],data_set_plot_sorted[colnames(data_set_plot_sorted) %in% significant_features])
       title_heatmap = paste("clustering_heatmap_significant_features_k",k,sep="")
       plot_clustering_heatmap(output_directory_plots_thr,k,title,data_set_norm,title_heatmap)
-    }
+    #}
   } 
 }
 

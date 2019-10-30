@@ -192,8 +192,19 @@ logistic_regression <- function(data,training,runs){
   
   for(run in 1:runs){
     training_idx = sort(c(sample(x=idx_y_0, size=training, replace=F),sample(x=idx_y_1, size=training, replace=F)))
-    data_training = data[sort(training_idx),]
+    data_training = data[training_idx,]
     data_test = data[-training_idx,]
+    
+    remove_factor = c()
+    for(f in 1:ncol(data_training)){
+      if(is.factor(data_training[,f])){
+        if(sum(as.numeric(data_training[,f])-1) == 0){
+          remove_factor = c(remove_factor,f)
+        }
+      }
+    }
+    data_training = data_training[,-remove_factor]
+    data_test = data_test[,-remove_factor]
     
     logistic_regression_model = glm(target~.,family = binomial(link='logit'),data=data_training)
     coefficients = coef(logistic_regression_model)
@@ -244,6 +255,17 @@ regularized_logistic_regression <- function(data,training,alpha,runs,runs_lambda
     y_training = target[sort(training_idx)]
     x_test = data_set[-sort(training_idx),]
     y_test = target[-sort(training_idx)]
+    
+    remove_factor = c()
+    for(f in 1:ncol(x_training)){
+      if(is.factor(x_training[,f])){
+        if(sum(as.numeric(x_training[,f])-1) == 0){
+          remove_factor = c(remove_factor,f)
+        }
+      }
+    }
+    x_training = x_training[,-remove_factor]
+    x_test = x_test[,-remove_factor]
     
     #run the model "runs_lambda" times to get a sequence of "runs_lambda" best lambdas
     best_lambdas = foreach(i=1:runs_lambda,.combine=c,.packages='glmnet') %dopar% {

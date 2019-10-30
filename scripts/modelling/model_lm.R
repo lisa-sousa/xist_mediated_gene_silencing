@@ -11,7 +11,7 @@ library(here)
 library(matrixStats)
 library(ggplot2)
 library(reshape2)
-source(here("scripts/modelling","model_functions.R"))
+source(here("scripts/modelling","model_functions_lm.R"))
 
 ########################################
 #directories and files
@@ -81,6 +81,7 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
       ########################################
       
       data = load_data(file_feature_matrix, thr_silencing_lower, thr_silencing_middle, thr_silencing_upper, file_high_confidence_escapees)
+      data[[1]]$overlap_with_CpG_islands[as.numeric(data[[1]]$overlap_with_CpG_islands) > 2] = 1
       
       smaller_set = min(c(sum(data[[2]]==0),sum(data[[2]]==1)))
       training = round(min(c(smaller_set/100*80,smaller_set-test_set_min_size)))

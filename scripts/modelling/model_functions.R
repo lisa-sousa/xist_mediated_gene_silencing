@@ -499,7 +499,7 @@ clutserboot_pam <- function(distance, B, k) {
       message("Here's the original error message:")
       message(cond)
       # Choose a return value in case of error
-      return(1)
+      return(0)
     },
     warning=function(cond) {
       message("Clusterboot caused warning.")

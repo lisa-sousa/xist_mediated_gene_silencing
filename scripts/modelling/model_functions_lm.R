@@ -209,7 +209,6 @@ logistic_regression <- function(data,training,runs){
   }
   plot_coefficients(coefficients_df,runs) 
   boxplot(error,ylab = 'error') 
-  print(mean(error))
   return(error)
 }
 

@@ -13,7 +13,7 @@ bedTools = '/home/lisasous/tools/bedtools2/bin/' #set path to bedtools 2 /bin/ f
 #directories
 ###################################################################################
 
-feature_matrix_name = 'promoter_matrix_reannotated_kmer_pro_seq_genes_1kb'
+feature_matrix_name = 'promoter_pro_seq_genes_kmer1kb'
 output_dir = 'data/modelling/feature_matrix'
 tmp_dir = here(output_dir,'tmp')
 system(paste('mkdir',tmp_dir))
@@ -33,7 +33,7 @@ halftimes_table$TSS[halftimes_table$strand == '+'] = halftimes_table$start[halft
 halftimes_table$TSS[halftimes_table$strand == '-'] = halftimes_table$end[halftimes_table$strand == '-']
 
 
-##########gene regions from start to end and 1000 bp around the promoter
+##########gene regions from start to end and x bp around the promoter
 gene_regions = GRanges(seqnames = halftimes_table$chr, ranges = IRanges(halftimes_table$start,halftimes_table$end), strand = halftimes_table$strand)
 mcols(gene_regions) = data.frame(name = halftimes_table$gene_name, score = halftimes_table$halftime)
 #mcols(gene_regions) = data.frame(name = halftimes_table$gene_name, score = 0) #all genes

@@ -27,12 +27,12 @@ source(here("scripts/modelling","model_functions.R"))
 #directories and files
 ########################################
 
-output_directory_plots = 'plots/modelling'
 output_directory_data = 'data/modelling/model'
+output_directory_plots = 'plots/modelling'
 
-file_feature_matrix = here("data/modelling/feature_matrix","promoter_matrix_reannotated_normRAdjusted_pro_seq_genes.RData")
+file_feature_matrix = here("data/modelling/feature_matrix","promoter_pro_seq_genes_epigenetic.RData")
 file_high_confidence_escapees = here("data/annotation_files/escapees","escapees.RData")
-file_feature_matrix_predictions = here("data/modelling/feature_matrix","promoter_matrix_reannotated_normRAdjusted_all_chrX_genes.RData")
+file_feature_matrix_predictions = here("data/modelling/feature_matrix","promoter_all_genes_epigenetic.RData")
 file_gene_annotation = here("data/annotation_files/gene_annotation","gencode.vM9.annotation.chrX.genes.reannotated.with.rr.bed")
 file_SNPs = here("data/annotation_files/SNPs","gencode.vM9.annotation.SNP.count.bed")
 file_RPKM = here("data/silencing_halftimes/raw_data","GSE121144_PROseq.xlsx")
@@ -171,8 +171,8 @@ for(thr_silencing_lower in thr_silencing_lower_seq){
         selected_features0 = random_forest_model_all_features[[5]]
         selected_features1 = random_forest_model_all_features[[6]]
         selected_features = unique(c(selected_features0[1:x],selected_features1[1:x]))
-        data_set_selected_features = data[[1]][,colnames(data[[1]])%in%selected_features]
-        data_set_predictions_selected_features = data_set_predictions[,colnames(data_set_predictions)%in%selected_features]
+        data_set_selected_features = data[[1]][,colnames(data[[1]])%in%selected_features, drop = FALSE]
+        data_set_predictions_selected_features = data_set_predictions[,colnames(data_set_predictions)%in%selected_features, drop = FALSE]
         
         print("optimize mtry parameter...")
         mtry_seq = seq(1,ncol(data_set_selected_features),by=1)

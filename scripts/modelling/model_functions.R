@@ -209,7 +209,7 @@ optimize_top_features <- function(data_set,target,ntree,sampsize,runs,random_for
   for(x in 2:min(c(length(selected_features0),length(selected_features1),30))){
     data_set_top_x = data_set
     selected_features = unique(c(selected_features0[1:x],selected_features1[1:x]))
-    data_set_top_x = data_set_top_x[,colnames(data_set_top_x)%in%selected_features]
+    data_set_top_x = data_set_top_x[,colnames(data_set_top_x)%in%selected_features, drop = F]
     
     mtry_seq = seq(1,ncol(data_set_top_x),by=1)
     opt_mtry = optimize_mtry(data_set_top_x,target,mtry_seq,ntree,sampsize,thr_class_error,mtry_runs)

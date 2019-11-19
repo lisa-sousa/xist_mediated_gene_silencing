@@ -15,7 +15,7 @@ bedTools = '/home/lisasous/tools/bedtools2/bin/' #set path to bedtools 2 /bin/ f
 #directories
 ###################################################################################
 
-feature_matrix_name = 'promoter_matrix_reannotated_normRAdjusted_pro_seq_genes'
+feature_matrix_name = 'promoter_pro_seq_genes_epigenetic'
 output_dir = 'data/modelling/feature_matrix'
 tmp_dir = here(output_dir,'tmp')
 system(paste('mkdir',tmp_dir))

@@ -267,13 +267,16 @@ colnames(mrna_seq_undiff_data)[4:15] = c('NoDoxA_Ratio','NoDoxB_Ratio','Dox2hrA_
 mrna_seq_undiff_data = mrna_seq_undiff_data[complete.cases(mrna_seq_undiff_data),]
 mrna_seq_undiff_data = cbind(mrna_seq_undiff_data[,1:3],sapply(mrna_seq_undiff_data[,4:ncol(mrna_seq_undiff_data)], as.numeric))
 mrna_seq_undiff_data_chrX = mrna_seq_undiff_data[mrna_seq_undiff_data$Chromosomes=='chrX',]
+
 #filter for genes that have a more or less balanced initial ratio 
 initial_ratio = rowMeans(mrna_seq_undiff_data[,colnames(mrna_seq_undiff_data) %in% c('NoDoxA_Ratio','NoDoxB_Ratio')])
 mrna_seq_undiff_genes = which((initial_ratio > 0.2) & (initial_ratio < 0.8))
+
 #use only genes with balanced initial ratio
 mrna_seq_undiff_data_chrX = mrna_seq_undiff_data_chrX[mrna_seq_undiff_genes,]
 mrna_seq_undiff_data_chrX = merge(gene_annotation,mrna_seq_undiff_data_chrX,by='Genes')
 
+#plot ratios
 cairo_pdf(paste(output_dir_plot,'ratios_mrna_seq_undiff.pdf',sep=''),width = 6,height = 2)
 print(plot_ratios(mrna_seq_undiff_data_chrX))
 dev.off()
@@ -325,7 +328,7 @@ mcols(gene_regions_mrna_seq_diff) = data.frame(name = fitted_data_mrna_seq_diff_
 write.table(fitted_data_mrna_seq_diff_filtered,file=file_mrna_seq_diff_all,sep='\t',col.names=T,row.names=F,quote=F)
 export.bed(gene_regions_mrna_seq_diff, con=file_mrna_seq_diff_halftimes, format='bed')	
 
-
+#plot ratios
 cairo_pdf(paste(output_dir_plot,'ratios_mrna_seq_diff.pdf',sep=''),width = 6,height = 2)
 print(plot_ratios(mrna_seq_diff_data_chrX))
 dev.off()

@@ -189,7 +189,7 @@ fitted_data_pro_seq = data.frame(pro_seq_data_chrX[,c(2,4,5,1)],halftime = rep(-
 fitted_data_pro_seq = fit_data(pro_seq_gene_ratios,pseudo_count,time,fitted_data_pro_seq,control)
 dev.off()
 
-#filter for not well fitted genes --> residuals
+#filter for not well fitted genes --> residuals < 1.5
 fitted_data_pro_seq_filtered = fitted_data_pro_seq[fitted_data_pro_seq$RSS < 1.5,]
 
 gene_regions_pro_seq = GRanges(seqnames = fitted_data_pro_seq_filtered$Chromosomes, ranges = IRanges(fitted_data_pro_seq_filtered$Start,fitted_data_pro_seq_filtered$End), 
@@ -208,6 +208,7 @@ replicates = data.frame(No_Dox_A = log10(pro_seq_data$NoDoxA_RPKM), No_Dox_B = l
 is.na(replicates) <- sapply(replicates, is.infinite)
 replicates = replicates[complete.cases(replicates),]
 
+#plot replicates
 cairo_pdf(paste(output_dir_plot,'paper_figures_replicates_pro_seq.pdf',sep=''),width = 8,height = 3.5, onefile = TRUE)
 nodox = scatterplot_dense_colors(replicates$No_Dox_A,replicates$No_Dox_B, "No Dox A [log10(RPKM)]","No Dox B [log10(RPKM)]")
 dox24 = scatterplot_dense_colors(replicates$Dox_24h_A,replicates$Dox_24h_B, "Dox 24h A [log10(RPKM)]","Dox 24h B [log10(RPKM)]")
